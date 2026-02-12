@@ -1,0 +1,67 @@
+#include "minishell.h"
+
+void	initial_prompt(void)
+{
+	ft_printf("[[ This is not minishell. ]]\n");
+}
+
+void	ctrl(int n)
+{
+	if (n == SIGINT)
+		write(1, "\n", 1);
+	else if (n == SIGQUIT)
+		write(1, "A", 1);
+} // CTRL+ 입력 처리 전반적으로 수정/추가
+
+void	tmp_split(char *user, t_input *input)
+{
+	char	**tmp;
+	t_input	*arg;
+	int	i;
+
+	tmp = ft_split(user, ' ');
+	arg = input;
+	i = 0;
+	while (tmp[i])
+	{
+		input->next = ft_calloc(1, sizeof(t_input));
+		arg = input->next;
+		input->cnt = ft_strdup(tmp[i]);
+		input = arg;
+		free(tmp[i]);
+		i++;
+	}
+	free(tmp);
+}
+
+
+int	main(int argc, char *argv[], char *envp[]) //어떤 형태로 있어야하지?
+{
+	char	*user;
+	t_input	*input;
+
+	if (argc != 1)
+		exit (1);
+	signal(SIGINT, ctrl);
+	signal(SIGQUIT, ctrl);
+	initial_prompt();
+	input = ft_calloc(1, sizeof(t_input));
+
+	while (1)
+	{
+		if (!input)
+			exit(1);
+		user = readline("text: ");
+		if (!user) //아무것도 안 들어오고 바로 시그널해서 없애버리는 경우.
+			exit(143); // SIGNAL 종료 = 128 + SIG 번호, SIGTERM(ctrl+D) 15번
+		if (!user[0])
+			continue ;
+		if (ft_strlen(user) == 4 && !ft_strncmp(user, "exit", 4))
+			return(free(user), exit(0), 0);
+//		if (do_parse(user, &input, envp) == pass)
+		input->cnt = "cd";
+		do_minishell(&input, envp); // 실행 파트.
+		free_all(user, input);
+	}
+	(void)argv;
+}
