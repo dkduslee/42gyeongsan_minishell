@@ -1,20 +1,20 @@
-NAME = minishell
-DIR = 
-CC = cc -Wall -Werror -Wextra -lreadline
-SRC = built_in.c env.c minishell.c
+NAME = minishell 
+CC = cc -Wall -Werror -Wextra
+READLINE = -lreadline
+SRC = built_in.c env.c error_print.c minishell.c
 OBJ = $(SRC:.c=.o)
 LIBFT = ./libft/libft.a
 
 all : $(NAME)
 
 $(NAME): $(OBJ) $(LIBFT)
-	$(CC) $(OBJ) $(LIBFT) -o $@
-	
-%.o : %.c
-	$(CC) -c $< -o $@
-	
+	$(CC) $(READLINE) $(OBJ) $(LIBFT) -o $@
+
 $(LIBFT):
 	make -C ./libft bonus
+
+%.o : %.c minishell.h
+	$(CC) -c $< -o $@
 	
 clean:
 	@make -C ./libft fclean

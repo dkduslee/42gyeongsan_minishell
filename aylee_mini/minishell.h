@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:57 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/12 13:22:05 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/21 14:42:34 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include <unistd.h>
 # include <string.h>
 # include <signal.h>
-# include "../aylee/pipex/libft/libft.h"
+# include "libft/libft.h"
 
 typedef struct s_env
 {
@@ -33,14 +33,14 @@ typedef struct s_data
 	int		exit_status; //프로세스의 종료상태.
 } t_data;
 
-typedef struct s_input //파싱부 형태 예시
+typedef struct s_cmd //파싱부 형태 예시
 {
-	char			*cnt;
-	char			*type;
-	int				len;
-	struct s_input	*next;
+	char			*cmd;
+	char			**argv;
+	// read	;
+	struct s_cmd	*next;
 	//여기에 ""이 있는지 판단하는 것도 넣기.
-} t_input;
+} t_cmd;
 
 t_env *create_env_node(const char *key, const char *value);
 void free_env_node(t_env *node);

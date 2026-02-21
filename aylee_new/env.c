@@ -6,13 +6,13 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:53 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 15:40:14 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/21 16:02:36 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_env *create_env_node(const char *key, const char *value) //환경변수의 노드를 생성.
+t_env *create_env_node(const char *key, const char *value)
 {
 	t_env *new_node;
 
@@ -20,7 +20,7 @@ t_env *create_env_node(const char *key, const char *value) //환경변수의 노
 	if (!new_node)
 		return NULL;
 	new_node->key = ft_strdup(key);
-	new_node->value = ft_strdup(value);
+	new_node->value = value ? ft_strdup(value) : NULL; // value가 NULL일 수 있음
 	new_node->next = NULL;
 	return new_node;
 }
@@ -30,12 +30,13 @@ void free_env_node(t_env *node)
 	if (node)
 	{
 		free(node->key);
-		free(node->value);
+		if (node->value)
+			free(node->value);
 		free(node);
 	}
 }
 
-t_env *find_env_node(t_env *head, const char *key) //환경변수의 노드를 찾음.
+t_env *find_env_node(t_env *head, const char *key)
 {
 	t_env *current = head;
 
@@ -48,12 +49,12 @@ t_env *find_env_node(t_env *head, const char *key) //환경변수의 노드를 �
 	return (NULL);
 }
 
-t_env *add_env_node(t_env **head, const char *key, const char *value) //환경변수의 노드를 추가.
+t_env *add_env_node(t_env **head, const char *key, const char *value)
 {
 	t_env *new_node;
 	t_env *current;
 
-	new_node = create_env_node(key, value); //value가 null일 때도 있음.
+	new_node = create_env_node(key, value);
 	if (!new_node)
 		return (NULL);
 	if (*head == NULL)
@@ -68,7 +69,7 @@ t_env *add_env_node(t_env **head, const char *key, const char *value) //환경�
 	return (new_node);
 }
 
-t_env *parse_env(char **envp) //env 파싱 함수
+t_env *parse_env(char **envp)
 {
 	t_env 	*env_list;
 	size_t	 key_len;
@@ -82,12 +83,11 @@ t_env *parse_env(char **envp) //env 파싱 함수
 	while (envp[i])
 	{
 		equal_sign = ft_strchr(envp[i], '=');
-		if (equal_sign) //찾았으면?
+		if (equal_sign)
 		{
 			key_len = equal_sign - envp[i];
 			key = (char *)malloc(key_len + 1);
-			ft_strncpy(key, envp[i], key_len);
-			key[key_len] = '\0';
+			ft_strlcpy(key, envp[i], key_len + 1);
 			value = ft_strdup(equal_sign + 1);
 			add_env_node(&env_list, key, value);
 			free(key);
@@ -98,7 +98,7 @@ t_env *parse_env(char **envp) //env 파싱 함수
 	return (env_list);
 }
 
-void free_env_list(t_env *head) //환경변수 리스트 해제 함수
+void free_env_list(t_env *head)
 {
 	t_env *current = head;
 	t_env *next_node;
@@ -111,9 +111,9 @@ void free_env_list(t_env *head) //환경변수 리스트 해제 함수
 	}
 }
 
-void delete_env(t_env *head, char *key) //환경변수 삭제 함수
+void delete_env(t_env **head, char *key) // head를 포인터의 포인터로 수정
 {
-	t_env *current = head;
+	t_env *current = *head;
 	t_env *prev = NULL;
 
 	while (current)
@@ -123,50 +123,24 @@ void delete_env(t_env *head, char *key) //환경변수 삭제 함수
 			if (prev)
 				prev->next = current->next;
 			else
-				head = current->next;
+				*head = current->next; // head 업데이트
 			free_env_node(current);
-			current = (prev) ? prev->next : head;
+			return; // 찾았으면 종료
 		}
-		else
-		{
-			prev = current;
-			current = current->next;
-		}
+		prev = current;
+		current = current->next;
 	}
 }
 
-void print_env_list(t_env *head) //환경변수 리스트 출력 함수
+void print_env_list(t_env *head)
 {
 	t_env *current = head;
 
 	while (current)
 	{
-		printf("%s=%s\n", current->key, current->value);
+		if (current->value) // value가 있는 것만 출력 (env 명령어용)
+			printf("%s=%s\n", current->key, current->value);
 		current = current->next;
 	}
 }
 
-t_data	*init_data(char **envp)
-{
-	t_data	*data;
-
-	data = (t_data *)malloc(sizeof(t_data));
-	if (!data)
-		return (NULL);
-	data->env = parse_env(envp);
-	data->exit_status = 0;
-	return (data);
-}
-
-// int main(int argc, char **argv, char **envp) //이게 지금 envp 파싱끝.
-// {
-// 	t_env *env_list;
-
-// 	(void)argc;
-// 	(void)argv;
-
-// 	env_list = parse_env(envp);
-// 	print_env_list(env_list);
-// 	free_env_list(env_list);
-// 	return 0;
-// }

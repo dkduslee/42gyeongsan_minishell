@@ -24,12 +24,12 @@ void	init_shell(t_shell *shell, char **envp)
 int	parse_and_execute(t_shell *shell, char *line)
 {
 	(void)shell;
-	if (ft_strcmp(line, "exit") == 0)
+	if (ft_strncmp(line, "exit", 4) == 0)
 	{
 		shell->exit_status = 0;
 		return 1;
 	}
-	if ()
+	// if ()
 	// 파싱된 거 기반으로 envp랑 비교구문.
 	printf("입력받은 내용: %s\n", line);
 	return 0;

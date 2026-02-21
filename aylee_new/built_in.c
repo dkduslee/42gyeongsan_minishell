@@ -6,14 +6,13 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:49 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 15:40:12 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/21 17:05:38 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-//여기서 char **args는 기본적으로 넣어둔 배열. 파싱부의 형태보고 고치기.
-//echo 구현
+// echo 구현
 int	builtin_echo(char **args)
 {
 	int i;
@@ -21,9 +20,9 @@ int	builtin_echo(char **args)
 	
 	newline = 1;
 	i = 1;
-	if (args[1] && ft_strncmp(args[1], "-n", 2) == 0)
+	if (args[1] && ft_strncmp(args[1], "-n", 3) == 0) // -nnnn 이런거 처리 (파싱부)
 	{
-		newline = 0; //이 옵션이 있음 뉴라인안함.
+		newline = 0;
 		i++;
 	}
 	while (args[i])
@@ -38,8 +37,8 @@ int	builtin_echo(char **args)
 	return 0;
 }
 
-//cd 구현
-int	builtin_cd(t_data *data, char **args) //data에 env
+// cd 구현
+int	builtin_cd(t_data *data, char **args) //절대경로랑 상대경로만 있는 경우 구현하기.
 {
 	const char 	*path;
 	t_env 		*home_node;
@@ -51,7 +50,7 @@ int	builtin_cd(t_data *data, char **args) //data에 env
 			path = home_node->value;
 		else
 		{
-			fprintf(stderr, "cd: HOME not set\n"); // 이거 써도 되나?
+			write(2, "minishell: cd: HOME not set\n", 28);
 			return 1;
 		}
 	}
@@ -59,7 +58,7 @@ int	builtin_cd(t_data *data, char **args) //data에 env
 	{
 		path = args[1];
 	}
-	if (chdir(path) != 0) //실패
+	if (chdir(path) != 0)
 	{
 		perror("cd");
 		return 1;
@@ -67,10 +66,11 @@ int	builtin_cd(t_data *data, char **args) //data에 env
 	return 0;
 }
 
-//pwd 구현
+// pwd 구현
 int	builtin_pwd(void)
 {
 	char cwd[1024];
+	
 	if (getcwd(cwd, sizeof(cwd)) != NULL)
 	{
 		printf("%s\n", cwd);
@@ -80,15 +80,55 @@ int	builtin_pwd(void)
 	return 1;
 }
 
-//export 구현
-int	builtin_export(t_data *data, char **args)
+// export 구현 (KEY=VALUE 형태 파싱)
+int	builtin_export(t_data *data, char **args) //숫자 들어오면 막아야함. 
+//bash: export: `1233e': not a valid identifier
+
 {
+	char	*equal_sign;
+	char	*key;
+	char	*value;
+	size_t	key_len;
+	int		i;
+	t_env	*current;
+
+	// 인자가 없으면 모든 환경 변수 출력 (export 형태로)
 	if (args[1] == NULL)
 	{
-		print_env(data->env);
+		current = data->env;
+		while (current)
+		{
+			if (current->value)
+				printf("declare -x %s=\"%s\"\n", current->key, current->value);
+			else
+				printf("declare -x %s\n", current->key);
+			current = current->next;
+		}
 		return 0;
 	}
-	return set_env_var(data, args[1], args[2]); //이거 지금 함수가 없음. env에 추가하는 함수
+	
+	// 각 인자에 대해 처리
+	i = 1;
+	while (args[i])
+	{
+		equal_sign = ft_strchr(args[i], '=');
+		if (equal_sign) // KEY=VALUE 형태
+		{
+			key_len = equal_sign - args[i];
+			key = (char *)malloc(key_len + 1);
+			ft_strlcpy(key, args[i], key_len + 1);
+			value = equal_sign + 1;
+			set_env_var(data, key, value);
+			free(key);
+		}
+		else // KEY만 있는 경우 (value는 NULL)
+		{
+			if (!find_env_node(data->env, args[i]))
+				add_env_node(&data->env, args[i], NULL);
+		}
+		i++;
+	}
+	return 0;
 }
 
 int	set_env_var(t_data *data, const char *key, const char *value)
@@ -98,79 +138,69 @@ int	set_env_var(t_data *data, const char *key, const char *value)
 	node = find_env_node(data->env, key);
 	if (node)
 	{
-		free(node->value);
-		node->value = strdup(value);
+		if (node->value)
+			free(node->value);
+		node->value = ft_strdup(value);
 	}
 	else
 	{
 		add_env_node(&data->env, key, value);
 	}
 	return 0;
-} //복사 env에 넣는 구조인데? env라고만 치면 value가 없는 것은 출력을 안 해야함.
-//=으로 구분이 되어있는지. 아!!!! value가 없는 걸 기준으로 하기.
-
-//unset 구현
-int	builtin_unset(t_data *data, char **args)
-{
-	if (args[1] == NULL)
-	{
-		// print_error("unset", "not enough arguments", 0); 아무것도 안 떠야 함.
-		return 0;
-	}
-	return (delete_env(data->env, args[1]), 0);
 }
 
-//exit 구현
+// unset 구현
+int	builtin_unset(t_data *data, char **args)
+{
+	int	i;
+
+	if (args[1] == NULL)
+		return 0;
+	
+	i = 1;
+	while (args[i])
+	{
+		delete_env(&data->env, args[i]);
+		i++;
+	}
+	return 0;
+}
+
+// exit 구현
 int	builtin_exit(t_data *data, char **args)
 {
 	int status = 0;
+	
+	printf("exit\n");
 	if (args[1])
-		status = ft_atoi(args[1]); //bash에서는 long으로 되어있음. 그냥 쓰면 이상하다고 함.
+		status = ft_atoi(args[1]);
 	clean_up(data);
 	exit(status);
 }
 
-//env 구현
+// env 구현
 int	builtin_env(t_data *data)
 {
-	if (data->env->value != NULL) //이런식으로 value가 있는 것만 출력. 추후 수정.
-		print_env(data->env);
+	print_env_list(data->env); // value가 있는 것만 출력
 	return 0;
 }
 
-//실행함수
+// 실행함수
 int	execute_builtin(t_data *data, char **args)
 {
-	if (ft_strncmp(args[0], "echo", 4) == 0)
+	if (ft_strncmp(args[0], "echo", 5) == 0)
 		return builtin_echo(args);
-	else if (ft_strncmp(args[0], "cd", 2) == 0)
+	else if (ft_strncmp(args[0], "cd", 3) == 0)
 		return builtin_cd(data, args);
-	else if (ft_strncmp(args[0], "pwd", 3) == 0)
+	else if (ft_strncmp(args[0], "pwd", 4) == 0)
 		return builtin_pwd();
-	else if (ft_strncmp(args[0], "export", 6) == 0)
+	else if (ft_strncmp(args[0], "export", 7) == 0)
 		return builtin_export(data, args);
-	else if (ft_strncmp(args[0], "unset", 5) == 0)
+	else if (ft_strncmp(args[0], "unset", 6) == 0)
 		return builtin_unset(data, args);
-	else if (ft_strncmp(args[0], "exit", 4) == 0)
+	else if (ft_strncmp(args[0], "exit", 5) == 0)
 		return builtin_exit(data, args);
-	else if (ft_strncmp(args[0], "env", 3) == 0)
+	else if (ft_strncmp(args[0], "env", 4) == 0)
 		return builtin_env(data);
 	return -1;
-}
-
-//테스트용 메인
-int	main(int argc, char **argv, char **envp)
-{
-	t_data *data;
-
-	// 초기화 및 환경 변수 설정
-	data = init_data(envp);
-	set_env_var(&data, "HOME", "/Users/aylee");
-
-	if (argc > 1)
-	{
-		execute_builtin(&data, argv + 1);
-	}
-	clean_up(&data);
-	return 0;
 }
