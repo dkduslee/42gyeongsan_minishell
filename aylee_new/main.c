@@ -6,13 +6,13 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 18:19:32 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/23 14:56:35 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	is_builtin(char *cmd)
+int	is_builtin(char *cmd)
 {
 	if (ft_strncmp(cmd, "echo", 5) == 0)
 		return (1);
@@ -33,40 +33,28 @@ static int	is_builtin(char *cmd)
 
 static void	process_input(t_data *data, char *input)
 {
-	char	**args;
-	int		ret;
+	t_cmd	*cmd;
 
-	if (!input || !*input) //원래 스플릿 확인후에 수정
+	if (!input || !*input)
 		return ;
-	
-	// 공백으로 split
-	args = ft_split(input, ' ');
-	if (!args || !args[0])
-	{
-		free_split(args);
+	cmd = parse_pipeline(input);
+	if (!cmd)
 		return ;
-	}
-	
-	// builtin 명령어인지 확인
-	if (is_builtin(args[0]))
-	{
-		ret = execute_builtin(data, args);
-		data->exit_status = ret;
-	}
-	else
-	{
-		// printf("minishell: %s: command not found\n", args[0]);
-		ret = execute_command(data, args);
-		data->exit_status = ret;
-	}
-	
-	free_split(args);
+	execute_pipeline(data, cmd);
+	free_cmd_list(cmd);
 }
 
-void	print_error(t_data *data, const char *msg) //fprintf을 안 쓰고 해야 함
+void	print_error(t_data *data, char *cmd, int err_num, int exit_code)
 {
-	printf("Error: %s\n", msg);
-	data->exit_status = 1;
+	//strerror (errno)로 처리
+	printf("Minishell: %s : %s\n", cmd, strerror(err_num));
+	data->exit_status = exit_code;
+}
+
+void	print_error_msg(t_data *data, char *cmd, char *msg, int exit_code)
+{
+	printf("minishell: %s: %s\n", cmd, msg);
+	data->exit_status = exit_code;
 }
 
 int	main(int argc, char **argv, char **envp) //방향키가 안 먹는 중.
@@ -81,7 +69,7 @@ int	main(int argc, char **argv, char **envp) //방향키가 안 먹는 중.
 	data = init_data(envp);
 	if (!data)
 	{
-		print_error(data, "Failed to initialize data"); //이거 상태 이상하긴 한데 나중에 함수 만들어서 수정.
+		print_error(data, "Failed to initialize data", errno, 1); //이거 상태 이상하긴 한데 나중에 함수 만들어서 수정.
 		return (1);
 	}
 	

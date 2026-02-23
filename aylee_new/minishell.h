@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 17:49:59 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/23 14:54:27 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,10 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/wait.h>
+# include <errno.h>
 # include <readline/readline.h>
 # include <readline/history.h>
+# include "./libft/libft.h"
 
 typedef struct s_env
 {
@@ -50,6 +52,14 @@ typedef struct s_redir
 	char			*file;
 	struct s_redir	*next;
 }	t_redir;
+
+typedef struct s_cmd
+{
+	char			*cmd;
+	char			**argv;
+	t_redir			*redir;
+	struct s_cmd	*next;
+}	t_cmd;
 
 // env.c
 t_env	*create_env_node(const char *key, const char *value);
@@ -88,12 +98,18 @@ char	*ft_strjoin(char const *s1, char const *s2);
 char	**env_to_array(t_env *env);
 
 // main_init
+void	print_error(t_data *data, char *cmd, int err_num, int exit_code);
+void	print_error_msg(t_data *data, char *cmd, char *msg, int exit_code);
+int		is_builtin(char *cmd);
 t_data	*init_data(char **envp);
 
 // exec.c
+char	*find_command_path(const char *cmd, t_env *env);
 int		execute_command(t_data *data, char **args);
-int		wait_for_child(pid_t pid);
-void	handle_redirection(t_redir *redir);
-void	exec_child(t_data *data, char **args, t_redir *redir);
+int		execute_pipeline(t_data *data, t_cmd *cmd);
+
+// parse.c
+t_cmd	*parse_pipeline(char *input);
+void	free_cmd_list(t_cmd *cmd);
 
 #endif

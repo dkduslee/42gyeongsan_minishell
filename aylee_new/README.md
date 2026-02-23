@@ -143,3 +143,5 @@ export 123ee <==== 안 드가야함. 잘 드감>
 exit 문자열
 bash: exit: hello: numeric argument required
 exit 상태 2
+
+// errno는 단일 스레드 프로그램에서는 전역변수고, 다중 스레드에서는 스레드별로 저장되어 안전하게 지원한다.

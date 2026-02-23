@@ -6,7 +6,7 @@
 #    By: aylee <aylee@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/12 00:00:00 by aylee             #+#    #+#              #
-#    Updated: 2026/02/21 17:49:36 by aylee            ###   ########.fr        #
+#    Updated: 2026/02/23 14:54:49 by aylee            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,20 +21,28 @@ SRCS = main.c \
        env.c \
        utils.c \
        main_init.c \
-       exec.c
+       exec.c \
+	   parse.c
 
 OBJS = $(SRCS:.c=.o)
+LIBFT = ./libft/libft.a
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(NAME)
+$(NAME): $(OBJS) $(LIBFT)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBFT) -o $(NAME)
 
 %.o: %.c minishell.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(LIBFT):
+	@make -s -C ./libft bonus
+	@echo " [ ok ] | all libft is readly! "
+
 clean:
 	rm -f $(OBJS)
+	@make -s -C ./libft fclean
+	@echo " [ ok ] | all libft is clean! "
 
 fclean: clean
 	rm -f $(NAME)

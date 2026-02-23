@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:49 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 17:05:38 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/23 13:49:42 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,8 @@ int	builtin_cd(t_data *data, char **args) //절대경로랑 상대경로만 있�
 			path = home_node->value;
 		else
 		{
-			write(2, "minishell: cd: HOME not set\n", 28);
+			printf("Minishell: cd: HOME not set\n");
+			data->exit_status = 1;
 			return 1;
 		}
 	}
@@ -80,9 +81,23 @@ int	builtin_pwd(void)
 	return 1;
 }
 
+static int	is_valid_identifier(const char *str)
+{
+	if (!str || !*str)
+		return 0;
+	if (!ft_isalpha(str[0]) && str[0] != '_')
+		return 0;
+	while (*str && *str != '=')
+	{
+		if (!ft_isalnum(*str) && *str != '_')
+			return 0;
+		str++;
+	}
+	return (1);
+}
+
 // export 구현 (KEY=VALUE 형태 파싱)
-int	builtin_export(t_data *data, char **args) //숫자 들어오면 막아야함. 
-//bash: export: `1233e': not a valid identifier
+int	builtin_export(t_data *data, char **args)
 
 {
 	char	*equal_sign;
@@ -111,6 +126,12 @@ int	builtin_export(t_data *data, char **args) //숫자 들어오면 막아야함
 	i = 1;
 	while (args[i])
 	{
+		if (!is_valid_identifier(args[i]))
+		{
+			printf("minishell: export: `%s': not a valid identifier\n", args[i]);
+			i++;
+			continue;
+		}
 		equal_sign = ft_strchr(args[i], '=');
 		if (equal_sign) // KEY=VALUE 형태
 		{
@@ -204,3 +225,4 @@ int	execute_builtin(t_data *data, char **args)
 		return builtin_env(data);
 	return -1;
 }
+

@@ -6,19 +6,12 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/21 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/21 17:10:28 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/23 14:03:59 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/*
- * env 연결 리스트에서 PATH 값을 꺼내
- * cmd를 실행 가능한 전체 경로로 찾아 반환한다.
- *
- * 반환값: 찾은 경로 (malloc, 호출자가 free 해야 함)
- *         못 찾으면 NULL
- */
 char	*find_command_path(const char *cmd, t_env *env)
 {
 	t_env	*path_node;
@@ -27,7 +20,6 @@ char	*find_command_path(const char *cmd, t_env *env)
 	char	*tmp;
 	int		i;
 
-	// cmd에 '/'가 포함되면 경로 직접 지정으로 판단
 	if (ft_strchr(cmd, '/'))
 	{
 		if (access(cmd, X_OK) == 0)
@@ -37,17 +29,13 @@ char	*find_command_path(const char *cmd, t_env *env)
 	path_node = find_env_node(env, "PATH");
 	if (!path_node || !path_node->value)
 		return (NULL);
-
-	// PATH 값을 ':'로 분리
 	dirs = ft_split(path_node->value, ':');
 	if (!dirs)
 		return (NULL);
-
 	i = 0;
 	full_path = NULL;
 	while (dirs[i])
 	{
-		// dir + "/" + cmd 조합
 		tmp = ft_strjoin(dirs[i], "/");
 		full_path = ft_strjoin(tmp, cmd);
 		free(tmp);
@@ -61,51 +49,123 @@ char	*find_command_path(const char *cmd, t_env *env)
 	return (full_path);
 }
 
-/*
- * 외부 명령어 실행 (ls, cat 등)
- * fork → execve 방식으로 실행하고 exit_status 업데이트
- *
- * @return  명령어 종료 코드
- */
+static int	apply_redir(t_data *data, t_redir *redir)
+{
+	int	fd;
+
+	while (redir)
+	{
+		if (redir->type == REDIR_IN)
+			fd = open(redir->file, O_RDONLY);
+		else if (redir->type == REDIR_OUT)
+			fd = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		else if (redir->type == REDIR_APPEND)
+			fd = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+		else
+		{
+			redir = redir->next;
+			continue ;
+		}
+		if (fd == -1)
+		{
+			print_error(data, redir->file, errno, 1);
+			return (-1);
+		}
+		if (redir->type == REDIR_IN)
+			dup2(fd, STDIN_FILENO);
+		else
+			dup2(fd, STDOUT_FILENO);
+		close(fd);
+		redir = redir->next;
+	}
+	return (0);
+}
+
+static void	close_all_pipes(int **pipes, int count)
+{
+	int	i;
+
+	i = 0;
+	while (i < count)
+	{
+		close(pipes[i][0]);
+		close(pipes[i][1]);
+		i++;
+	}
+}
+
+static void	exec_child(t_data *data, t_cmd *cmd,
+				int **pipes, int i, int cmd_count)
+{
+	char	*cmd_path;
+	char	**envp;
+
+	if (i > 0)
+		dup2(pipes[i - 1][0], STDIN_FILENO);
+	if (i < cmd_count - 1)
+		dup2(pipes[i][1], STDOUT_FILENO);
+	close_all_pipes(pipes, cmd_count - 1);
+	if (apply_redir(data, cmd->redir) == -1)
+		exit(1);
+	if (is_builtin(cmd->argv[0]))
+		exit(execute_builtin(data, cmd->argv));
+	cmd_path = find_command_path(cmd->argv[0], data->env);
+	if (!cmd_path)
+	{
+		print_error_msg(data, cmd->argv[0], "command not found", 127);
+		exit(127);
+	}
+	envp = env_to_array(data->env);
+	execve(cmd_path, cmd->argv, envp);
+	print_error(data, cmd->argv[0], errno, 126);
+	exit(126);
+}
+
+static int	count_cmd(t_cmd *cmd)
+{
+	int	count;
+
+	count = 0;
+	while (cmd)
+	{
+		count++;
+		cmd = cmd->next;
+	}
+	return (count);
+}
+
 int	execute_command(t_data *data, char **args)
 {
 	char	*cmd_path;
 	char	**envp;
 	pid_t	pid;
 	int		status;
-	char	buf[256];
 
+	if (!args || !args[0])
+		return (0);
+	if (is_builtin(args[0]))
+		return (execute_builtin(data, args));
 	cmd_path = find_command_path(args[0], data->env);
 	if (!cmd_path)
 	{
-		write(2, "minishell: ", 11);
-		write(2, args[0], ft_strlen(args[0]));
-		write(2, ": command not found\n", 20);
-		data->exit_status = 127;
+		print_error_msg(data, args[0], "command not found", 127);
 		return (127);
 	}
-
-	// t_env 리스트를 execve용 char** 환경변수 배열로 변환
 	envp = env_to_array(data->env);
-
 	pid = fork();
 	if (pid == -1)
 	{
-		perror("minishell: fork");
+		print_error(data, "fork", errno, 1);
 		free(cmd_path);
 		free_split(envp);
-		return (-1);
+		return (1);
 	}
 	if (pid == 0)
 	{
 		execve(cmd_path, args, envp);
-		// execve 실패 시
-		ft_strlcpy(buf, "minishell: ", sizeof(buf));
-		ft_strlcat(buf, args[0], sizeof(buf));
-		perror(buf);
+		print_error(data, args[0], errno, 126);
 		exit(126);
 	}
-	// 부모: 자식 대기
 	waitpid(pid, &status, 0);
 	free(cmd_path);
 	free_split(envp);
@@ -113,5 +173,90 @@ int	execute_command(t_data *data, char **args)
 		data->exit_status = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		data->exit_status = 128 + WTERMSIG(status);
+	return (data->exit_status);
+}
+
+int	execute_pipeline(t_data *data, t_cmd *cmd)
+{
+	int		cmd_count;
+	int		**pipes;
+	pid_t	*pids;
+	t_cmd	*cur;
+	int		i;
+	int		status;
+	pid_t	pid;
+
+	if (!cmd || !cmd->argv)
+		return (1);
+	if (!cmd->next)
+	{
+		if (!cmd->redir)
+			return (execute_command(data, cmd->argv));
+		pid = fork();
+		if (pid == 0)
+		{
+			if (apply_redir(data, cmd->redir) == -1)
+				exit(1);
+			exit(execute_command(data, cmd->argv));
+		}
+		waitpid(pid, &status, 0);
+		if (WIFEXITED(status))
+			data->exit_status = WEXITSTATUS(status);
+		return (data->exit_status);
+	}
+	cmd_count = count_cmd(cmd);
+	pipes = malloc(sizeof(int *) * (cmd_count - 1));
+	if (!pipes)
+		return (print_error(data, "malloc", errno, 1), 1);
+	i = 0;
+	while (i < cmd_count - 1)
+	{
+		pipes[i] = malloc(sizeof(int) * 2);
+		if (!pipes[i] || pipe(pipes[i]) == -1)
+		{
+			print_error(data, "pipe", errno, 1);
+			return (1);
+		}
+		i++;
+	}
+	pids = malloc(sizeof(pid_t) * cmd_count);
+	if (!pids)
+		return (print_error(data, "malloc", errno, 1), 1);
+	cur = cmd;
+	i = 0;
+	while (cur)
+	{
+		pids[i] = fork();
+		if (pids[i] == -1)
+		{
+			print_error(data, "fork", errno, 1);
+			close_all_pipes(pipes, cmd_count - 1);
+			free(pids);
+			return (1);
+		}
+		if (pids[i] == 0)
+			exec_child(data, cur, pipes, i, cmd_count);
+		cur = cur->next;
+		i++;
+	}
+	close_all_pipes(pipes, cmd_count - 1);
+	i = 0;
+	while (i < cmd_count)
+	{
+		waitpid(pids[i], &status, 0);
+		if (i == cmd_count - 1)
+		{
+			if (WIFEXITED(status))
+				data->exit_status = WEXITSTATUS(status);
+			else if (WIFSIGNALED(status))
+				data->exit_status = 128 + WTERMSIG(status);
+		}
+		i++;
+	}
+	i = 0;
+	while (i < cmd_count - 1)
+		free(pipes[i++]);
+	free(pipes);
+	free(pids);
 	return (data->exit_status);
 }
