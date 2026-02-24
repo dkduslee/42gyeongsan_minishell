@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/23 14:54:27 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/24 18:12:06 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,8 @@ typedef struct s_redir
 {
 	t_redir_type	type;
 	char			*file;
+	int				fd; //히어독용 필드
+	char			*delimiter; //히어독용 필드
 	struct s_redir	*next;
 }	t_redir;
 
@@ -57,9 +59,17 @@ typedef struct s_cmd
 {
 	char			*cmd;
 	char			**argv;
+	//quote를 표시하는 flag 부분
 	t_redir			*redir;
 	struct s_cmd	*next;
 }	t_cmd;
+
+typedef struct s_pipes
+{
+	int		**pipes;
+	int		count;
+	pid_t	*pids;
+}	t_pipes;
 
 // env.c
 t_env	*create_env_node(const char *key, const char *value);
@@ -73,7 +83,7 @@ void	print_env_list(t_env *head);
 t_data	*init_data(char **envp);
 
 // built_in.c
-int		builtin_echo(char **args);
+int		builtin_echo(t_data *data, char **args);
 int		builtin_cd(t_data *data, char **args);
 int		builtin_pwd(void);
 int		builtin_export(t_data *data, char **args);
@@ -107,9 +117,29 @@ t_data	*init_data(char **envp);
 char	*find_command_path(const char *cmd, t_env *env);
 int		execute_command(t_data *data, char **args);
 int		execute_pipeline(t_data *data, t_cmd *cmd);
+int		apply_redir(t_data *data, t_redir *redir);
+void	exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i);
+void	close_all_pipes(int **pipes, int count);
+int		count_cmd(t_cmd *cmd);
+void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline);
+
+// pipe.c
+int		no_pipe(t_data *data, t_cmd *cmd);
+int		get_pids(t_data *data, t_cmd *cmd, t_pipes *pipeline);
+int		wait_pids(t_data *data, t_pipes *pipeline);
+void	free_pipeline(t_pipes *pipeline);
 
 // parse.c
 t_cmd	*parse_pipeline(char *input);
 void	free_cmd_list(t_cmd *cmd);
+
+// exec2.c
+int	make_right_path(const char *cmd, char **path_dirs, char **full_path);
+int	prepare_heredoc(t_data *data, t_cmd *cmd);
+int collect_heredoc(t_redir *redir);
+int count_heredocs(t_cmd *cmd);
+
+// image.c
+void	shell_init(void);
 
 #endif

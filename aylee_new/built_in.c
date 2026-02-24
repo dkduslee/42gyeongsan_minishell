@@ -6,14 +6,14 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:49 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/23 13:49:42 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/24 18:05:19 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
 // echo 구현
-int	builtin_echo(char **args)
+int	builtin_echo(t_data *data, char **args)
 {
 	int i;
 	int newline;
@@ -27,7 +27,10 @@ int	builtin_echo(char **args)
 	}
 	while (args[i])
 	{
-		printf("%s", args[i]);
+		if (ft_strncmp(args[i], "$?", 3) == 0)
+			printf("%d", data->exit_status);
+		else
+			printf("%s", args[i]);
 		if (args[i + 1])
 			printf(" ");
 		i++;
@@ -193,8 +196,13 @@ int	builtin_exit(t_data *data, char **args)
 	int status = 0;
 	
 	printf("exit\n");
-	if (args[1])
-		status = ft_atoi(args[1]);
+	if (args[1]) //개수가 여러개로 들어와도 오류처리.
+		status = ft_atoi(args[1]); // 큰 수가 오면 255로 exit하고, 문자가 오면 2로 exit하고 오류구문 내보냄.
+	if (args[2])
+	{
+		status = 1;
+		print_error_msg(data, args[0], "too many arguments", 1);
+	}
 	clean_up(data);
 	exit(status);
 }
@@ -210,7 +218,7 @@ int	builtin_env(t_data *data)
 int	execute_builtin(t_data *data, char **args)
 {
 	if (ft_strncmp(args[0], "echo", 5) == 0)
-		return builtin_echo(args);
+		return builtin_echo(data, args);
 	else if (ft_strncmp(args[0], "cd", 3) == 0)
 		return builtin_cd(data, args);
 	else if (ft_strncmp(args[0], "pwd", 4) == 0)

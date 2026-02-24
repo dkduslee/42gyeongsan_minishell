@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/23 14:56:35 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/24 16:06:59 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,8 @@ static void	process_input(t_data *data, char *input)
 	free_cmd_list(cmd);
 }
 
-void	print_error(t_data *data, char *cmd, int err_num, int exit_code)
+void	print_error(t_data *data, char *cmd, int err_num, int exit_code) //이거 걍 perror로 처리를 할까?
 {
-	//strerror (errno)로 처리
 	printf("Minishell: %s : %s\n", cmd, strerror(err_num));
 	data->exit_status = exit_code;
 }
@@ -57,7 +56,7 @@ void	print_error_msg(t_data *data, char *cmd, char *msg, int exit_code)
 	data->exit_status = exit_code;
 }
 
-int	main(int argc, char **argv, char **envp) //방향키가 안 먹는 중.
+int	main(int argc, char **argv, char **envp)
 {
 	t_data	*data;
 	char	*line;
@@ -72,7 +71,7 @@ int	main(int argc, char **argv, char **envp) //방향키가 안 먹는 중.
 		print_error(data, "Failed to initialize data", errno, 1); //이거 상태 이상하긴 한데 나중에 함수 만들어서 수정.
 		return (1);
 	}
-	
+	shell_init();
 	// 입력 루프
 	while (1)
 	{

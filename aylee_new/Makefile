@@ -6,14 +6,14 @@
 #    By: aylee <aylee@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/12 00:00:00 by aylee             #+#    #+#              #
-#    Updated: 2026/02/23 14:54:49 by aylee            ###   ########.fr        #
+#    Updated: 2026/02/24 16:08:02 by aylee            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = minishell
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g
+CFLAGS = -Wall -Wextra -Werror
 LDFLAGS = -lreadline
 
 SRCS = main.c \
@@ -22,7 +22,10 @@ SRCS = main.c \
        utils.c \
        main_init.c \
        exec.c \
-	   parse.c
+	   parse.c \
+	   pipe.c \
+	   exec2.c \
+	   image.c
 
 OBJS = $(SRCS:.c=.o)
 LIBFT = ./libft/libft.a

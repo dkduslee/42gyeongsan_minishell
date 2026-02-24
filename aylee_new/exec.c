@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/21 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/02/23 14:03:59 by aylee            ###   ########.fr       */
+/*   Updated: 2026/02/24 18:56:35 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,62 +17,51 @@ char	*find_command_path(const char *cmd, t_env *env)
 	t_env	*path_node;
 	char	**dirs;
 	char	*full_path;
-	char	*tmp;
-	int		i;
 
-	if (ft_strchr(cmd, '/'))
+	full_path = NULL;
+	if (ft_strchr(cmd, '/')) //기본적으로 경로를 가진 것으로 판단.
 	{
 		if (access(cmd, X_OK) == 0)
 			return (ft_strdup(cmd));
 		return (NULL);
 	}
-	path_node = find_env_node(env, "PATH");
+	path_node = find_env_node(env, "PATH"); //path 환경변수
 	if (!path_node || !path_node->value)
 		return (NULL);
-	dirs = ft_split(path_node->value, ':');
+	dirs = ft_split(path_node->value, ':'); //경로들을 따로 분리.
 	if (!dirs)
 		return (NULL);
-	i = 0;
-	full_path = NULL;
-	while (dirs[i])
-	{
-		tmp = ft_strjoin(dirs[i], "/");
-		full_path = ft_strjoin(tmp, cmd);
-		free(tmp);
-		if (access(full_path, X_OK) == 0)
-			break ;
-		free(full_path);
-		full_path = NULL;
-		i++;
-	}
-	free_split(dirs);
-	return (full_path);
+	if (make_right_path(cmd, dirs, &full_path))
+		return (free_split(dirs), full_path);
+	return (free_split(dirs), NULL);
 }
 
-static int	apply_redir(t_data *data, t_redir *redir)
+//히어독만의 필드 (임시저장 혹은 파이프)를 따로 구조체 안에 넣는 것이 중요한가?
+//히어독은 pipe를 생성하고 부모가 write 쪽에 내용 입력, 자식은 read 쪽을 듑.
+int	apply_redir(t_data *data, t_redir *redir)
 {
 	int	fd;
 
 	while (redir)
 	{
-		if (redir->type == REDIR_IN)
+		if (redir->type == REDIR_IN) //읽기 하고 듑
 			fd = open(redir->file, O_RDONLY);
-		else if (redir->type == REDIR_OUT)
+		else if (redir->type == REDIR_OUT) // 쓰기로 듑
 			fd = open(redir->file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		else if (redir->type == REDIR_APPEND)
+		else if (redir->type == REDIR_APPEND) // 쓰기 듑
 			fd = open(redir->file, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		else
-		{
-			redir = redir->next;
-			continue ;
-		}
-		if (fd == -1)
+		if (fd == -1) //실패의 경우 /////////////인데? 히어독은 어떻게 판별을 하지?
 		{
 			print_error(data, redir->file, errno, 1);
 			return (-1);
 		}
 		if (redir->type == REDIR_IN)
 			dup2(fd, STDIN_FILENO);
+		else if (redir->type == REDIR_HEREDOC) //히어독 사전에 준비해둔 파트대로 연결함.
+		{
+			dup2(redir->fd, STDIN_FILENO);
+			close(redir->fd);
+		}
 		else
 			dup2(fd, STDOUT_FILENO);
 		close(fd);
@@ -81,7 +70,7 @@ static int	apply_redir(t_data *data, t_redir *redir)
 	return (0);
 }
 
-static void	close_all_pipes(int **pipes, int count)
+void	close_all_pipes(int **pipes, int count)
 {
 	int	i;
 
@@ -94,17 +83,31 @@ static void	close_all_pipes(int **pipes, int count)
 	}
 }
 
-static void	exec_child(t_data *data, t_cmd *cmd,
-				int **pipes, int i, int cmd_count)
+int	count_cmd(t_cmd *cmd)
+{
+	int	count;
+
+	count = 0;
+	while (cmd)
+	{
+		count++;
+		cmd = cmd->next;
+	}
+	return (count);
+}
+//t_pipes pipeline;
+void	exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 {
 	char	*cmd_path;
 	char	**envp;
 
-	if (i > 0)
-		dup2(pipes[i - 1][0], STDIN_FILENO);
-	if (i < cmd_count - 1)
-		dup2(pipes[i][1], STDOUT_FILENO);
-	close_all_pipes(pipes, cmd_count - 1);
+	if (i > 0) //첫번째가 아니면 그전꺼로 읽어옴.
+		dup2(pipeline->pipes[i - 1][0], STDIN_FILENO);
+	if (i < pipeline->count - 1) //맨 끝 아니면
+		dup2(pipeline->pipes[i][1], STDOUT_FILENO);
+	close_all_pipes(pipeline->pipes, pipeline->count - 1);
+	if (prepare_heredoc(data, cmd) == -1)
+		exit(1);
 	if (apply_redir(data, cmd->redir) == -1)
 		exit(1);
 	if (is_builtin(cmd->argv[0]))
@@ -119,19 +122,6 @@ static void	exec_child(t_data *data, t_cmd *cmd,
 	execve(cmd_path, cmd->argv, envp);
 	print_error(data, cmd->argv[0], errno, 126);
 	exit(126);
-}
-
-static int	count_cmd(t_cmd *cmd)
-{
-	int	count;
-
-	count = 0;
-	while (cmd)
-	{
-		count++;
-		cmd = cmd->next;
-	}
-	return (count);
 }
 
 int	execute_command(t_data *data, char **args)
@@ -176,87 +166,56 @@ int	execute_command(t_data *data, char **args)
 	return (data->exit_status);
 }
 
+/*
+ * pipe fd 배열 초기화
+ * 실패 시 pipeline->pipes = NULL로 설정
+ */
+void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
+{
+	int	i;
+
+	pipeline->count = count_cmd(cmd);
+	pipeline->pids = malloc(sizeof(pid_t) * pipeline->count);
+	pipeline->pipes = malloc(sizeof(int *) * (pipeline->count - 1));
+	if (!pipeline->pipes || !pipeline->pids)
+	{
+		print_error(data, "malloc", errno, 1);
+		pipeline->pipes = NULL;
+		return ;
+	}
+	i = 0;
+	while (i < pipeline->count - 1)
+	{
+		pipeline->pipes[i] = malloc(sizeof(int) * 2);
+		if (!pipeline->pipes[i] || pipe(pipeline->pipes[i]) == -1)
+		{
+			print_error(data, "pipe", errno, 1);
+			close_all_pipes(pipeline->pipes, i);
+			free(pipeline->pipes);
+			pipeline->pipes = NULL;
+			return ;
+		}
+		i++;
+	}
+}
+
 int	execute_pipeline(t_data *data, t_cmd *cmd)
 {
-	int		cmd_count;
-	int		**pipes;
-	pid_t	*pids;
-	t_cmd	*cur;
-	int		i;
-	int		status;
-	pid_t	pid;
+	t_pipes	pipeline;
 
 	if (!cmd || !cmd->argv)
 		return (1);
 	if (!cmd->next)
+		return (no_pipe(data, cmd));
+	init_pipes(data, cmd, &pipeline);
+	if (!pipeline.pipes)
+		return (1);
+	if (get_pids(data, cmd, &pipeline))
 	{
-		if (!cmd->redir)
-			return (execute_command(data, cmd->argv));
-		pid = fork();
-		if (pid == 0)
-		{
-			if (apply_redir(data, cmd->redir) == -1)
-				exit(1);
-			exit(execute_command(data, cmd->argv));
-		}
-		waitpid(pid, &status, 0);
-		if (WIFEXITED(status))
-			data->exit_status = WEXITSTATUS(status);
-		return (data->exit_status);
+		free_pipeline(&pipeline);
+		return (1);
 	}
-	cmd_count = count_cmd(cmd);
-	pipes = malloc(sizeof(int *) * (cmd_count - 1));
-	if (!pipes)
-		return (print_error(data, "malloc", errno, 1), 1);
-	i = 0;
-	while (i < cmd_count - 1)
-	{
-		pipes[i] = malloc(sizeof(int) * 2);
-		if (!pipes[i] || pipe(pipes[i]) == -1)
-		{
-			print_error(data, "pipe", errno, 1);
-			return (1);
-		}
-		i++;
-	}
-	pids = malloc(sizeof(pid_t) * cmd_count);
-	if (!pids)
-		return (print_error(data, "malloc", errno, 1), 1);
-	cur = cmd;
-	i = 0;
-	while (cur)
-	{
-		pids[i] = fork();
-		if (pids[i] == -1)
-		{
-			print_error(data, "fork", errno, 1);
-			close_all_pipes(pipes, cmd_count - 1);
-			free(pids);
-			return (1);
-		}
-		if (pids[i] == 0)
-			exec_child(data, cur, pipes, i, cmd_count);
-		cur = cur->next;
-		i++;
-	}
-	close_all_pipes(pipes, cmd_count - 1);
-	i = 0;
-	while (i < cmd_count)
-	{
-		waitpid(pids[i], &status, 0);
-		if (i == cmd_count - 1)
-		{
-			if (WIFEXITED(status))
-				data->exit_status = WEXITSTATUS(status);
-			else if (WIFSIGNALED(status))
-				data->exit_status = 128 + WTERMSIG(status);
-		}
-		i++;
-	}
-	i = 0;
-	while (i < cmd_count - 1)
-		free(pipes[i++]);
-	free(pipes);
-	free(pids);
+	wait_pids(data, &pipeline);
+	free_pipeline(&pipeline);
 	return (data->exit_status);
 }
