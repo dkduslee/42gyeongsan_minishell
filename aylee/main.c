@@ -37,10 +37,14 @@ static void	process_input(t_data *data, char *input)
 
 	if (!input || !*input)
 		return ;
-	cmd = parse_pipeline(input);
+	cmd = parse_pipeline(input, data);
 	if (!cmd)
 		return ;
+	g_signal = 0;
 	execute_pipeline(data, cmd);
+	if (g_signal == SIGINT)
+		data->exit_status = 130;
+	g_signal = 0;
 	free_cmd_list(cmd);
 }
 
@@ -76,6 +80,7 @@ int	main(int argc, char **argv, char **envp) //이후에 수정.
 		return (1);
 	}
 	shell_init();
+	signal_interactive();
 	while (1)
 	{
 		line = readline("minishell$ ");
@@ -89,6 +94,10 @@ int	main(int argc, char **argv, char **envp) //이후에 수정.
 			add_history(line);
 			process_input(data, line);
 		}
+		else if (g_signal == SIGINT)
+			data->exit_status = 130;
+		g_signal = 0;
+		signal_interactive();
 		free(line);
 		line = NULL;
 	}
