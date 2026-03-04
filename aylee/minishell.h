@@ -25,6 +25,8 @@
 # include <readline/history.h>
 # include "./libft/libft.h"
 
+extern volatile sig_atomic_t	g_signal;
+
 typedef struct s_env
 {
 	char			*key;
@@ -52,6 +54,7 @@ typedef struct s_redir
 	t_redir_type	type;
 	char			*file;
 	int				fd;
+	int				quoted;
 	struct s_redir	*next;
 }	t_redir;
 
@@ -126,9 +129,37 @@ int		get_pids(t_data *data, t_cmd *cmd, t_pipes *pipeline);
 int		wait_pids(t_data *data, t_pipes *pipeline);
 void	free_pipeline(t_pipes *pipeline);
 
-// parse.c
-t_cmd	*parse_pipeline(char *input);
+// parse/
+typedef enum e_tok_type
+{
+	TOK_WORD,
+	TOK_PIPE,
+	TOK_REDIR_IN,
+	TOK_REDIR_OUT,
+	TOK_REDIR_APPEND,
+	TOK_HEREDOC,
+}	t_tok_type;
+
+typedef struct s_token
+{
+	t_tok_type		type;
+	char			*str;
+	int				quoted;
+	struct s_token	*next;
+}	t_token;
+
+t_cmd	*parse_pipeline(char *input, t_data *data);
 void	free_cmd_list(t_cmd *cmd);
+t_cmd	*new_cmd(void);
+void	free_redir_list(t_redir *redir);
+t_token	*lexer(char *input, t_data *data);
+void	free_tokens(t_token *head);
+t_token	*new_token(t_tok_type type, char *str);
+char	*str_append(char *s, char *add);
+char	*str_append_char(char *s, char c);
+char	*expand_dollar(char *input, int *i, t_data *data);
+char	*expand_heredoc_line(char *line, t_data *data);
+void	signal_interactive(void);
 
 // exec2.c
 int		make_right_path(const char *cmd, char **path_dirs, char **full_path);

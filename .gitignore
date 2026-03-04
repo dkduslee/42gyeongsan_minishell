@@ -1,0 +1,5 @@
+*.o
+*.a
+aylee/minishell
+aylee_new/
+.DS_Store
