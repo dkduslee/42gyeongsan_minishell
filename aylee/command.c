@@ -24,6 +24,16 @@ int	wait_child(t_data *data, pid_t pid)
 	return (data->exit_status);
 }
 
+static void	exec_after_fork(char *path, char **args, char **envp)
+{
+	signal(SIGQUIT, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	execve(path, args, envp);
+	perror("minishell");
+	free(path);
+	exit(126);
+}
+
 int	fork_and_exec(t_data *data, t_cmd *cmd, char *cmd_path)
 {
 	char	**envp;
@@ -41,12 +51,7 @@ int	fork_and_exec(t_data *data, t_cmd *cmd, char *cmd_path)
 		return (free(cmd_path), 1);
 	}
 	if (pid == 0)
-	{
-		execve(cmd_path, args, envp);
-		print_error(data, cmd->cmd, errno, 126);
-		free(cmd_path);
-		exit(126);
-	}
+		exec_after_fork(cmd_path, args, envp);
 	free(cmd_path);
 	free_split(envp);
 	free_split(args);

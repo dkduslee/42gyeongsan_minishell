@@ -18,6 +18,17 @@
  * 부모 프로세스에서 직접 실행해야 함.
  * 리다이렉션이 있으면 fork하여 부모 fd를 보호.
  */
+static void	no_pipe_child(t_data *data, t_cmd *cmd)
+{
+	signal(SIGQUIT, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	if (prepare_heredoc(data, cmd) == -1)
+		exit(1);
+	if (apply_redir(data, cmd->redir) == -1)
+		exit(1);
+	exit(execute_command(data, cmd));
+}
+
 int	no_pipe(t_data *data, t_cmd *cmd)
 {
 	pid_t	pid;
@@ -26,7 +37,7 @@ int	no_pipe(t_data *data, t_cmd *cmd)
 	if (is_builtin(cmd->cmd))
 	{
 		if (!cmd->redir)
-			return (execute_builtin(data, cmd));
+			return (data->exit_status = execute_builtin(data, cmd));
 	}
 	else if (!cmd->redir)
 		return (execute_command(data, cmd));
@@ -34,13 +45,7 @@ int	no_pipe(t_data *data, t_cmd *cmd)
 	if (pid == -1)
 		return (print_error(data, "fork", errno, 1), 1);
 	if (pid == 0)
-	{
-		if (prepare_heredoc(data, cmd) == -1)
-			exit(1);
-		if (apply_redir(data, cmd->redir) == -1)
-			exit(1);
-		exit(execute_command(data, cmd));
-	}
+		no_pipe_child(data, cmd);
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		data->exit_status = WEXITSTATUS(status);
