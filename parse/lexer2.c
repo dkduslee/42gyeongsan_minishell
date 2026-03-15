@@ -20,7 +20,8 @@ static void	lex_unsupported(char *in, int *i, t_lex *lx)
 	j = 0;
 	tok[j++] = in[*i];
 	if ((in[*i] == '&' && in[*i + 1] == '&')
-		|| (in[*i] == ';' && in[*i + 1] == ';'))
+		|| (in[*i] == ';' && in[*i + 1] == ';')
+		|| (in[*i] == '|' && in[*i + 1] == '|'))
 		tok[j++] = in[*i + 1];
 	tok[j] = '\0';
 	ft_putstr_fd("minishell: syntax error near unexpected token '", 2);
@@ -96,6 +97,12 @@ t_token	*lexer(char *input, t_data *data)
 		{
 			flush_word(&lx);
 			i++;
+		}
+		else if (input[i] == '|' && input[i + 1] == '|')
+		{
+			flush_word(&lx);
+			lex_unsupported(input, &i, &lx);
+			break ;
 		}
 		else if (input[i] == '|' || input[i] == '<' || input[i] == '>')
 		{
