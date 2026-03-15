@@ -12,6 +12,24 @@
 
 #include "parse_int.h"
 
+static void	lex_unsupported(char *in, int *i, t_lex *lx)
+{
+	char	tok[3];
+	int		j;
+
+	j = 0;
+	tok[j++] = in[*i];
+	if ((in[*i] == '&' && in[*i + 1] == '&')
+		|| (in[*i] == ';' && in[*i + 1] == ';')
+		|| (in[*i] == '|' && in[*i + 1] == '|'))
+		tok[j++] = in[*i + 1];
+	tok[j] = '\0';
+	ft_putstr_fd("minishell: syntax error near unexpected token `", 2);
+	ft_putstr_fd(tok, 2);
+	ft_putstr_fd("'\n", 2);
+	lx->error = 2;
+}
+
 static void	lex_op(char *in, int *i, t_lex *lx)
 {
 	t_token	*tok;
@@ -80,10 +98,24 @@ t_token	*lexer(char *input, t_data *data)
 			flush_word(&lx);
 			i++;
 		}
+		else if (input[i] == '|' && input[i + 1] == '|')
+		{
+			flush_word(&lx);
+			lex_unsupported(input, &i, &lx);
+			break ;
+		}
 		else if (input[i] == '|' || input[i] == '<' || input[i] == '>')
 		{
 			flush_word(&lx);
 			lex_op(input, &i, &lx);
+		}
+		else if (input[i] == '&' || input[i] == ';'
+			|| input[i] == '(' || input[i] == ')'
+			|| input[i] == '*')
+		{
+			flush_word(&lx);
+			lex_unsupported(input, &i, &lx);
+			break ;
 		}
 		else
 			lex_char(input, &i, &lx, data);
@@ -92,7 +124,8 @@ t_token	*lexer(char *input, t_data *data)
 	if (lx.error)
 	{
 		free_tokens(lx.head);
-		ft_putstr_fd("minishell: syntax error: unclosed quote\n", 2);
+		if (lx.error == 1)
+			ft_putstr_fd("minishell: syntax error: unclosed quote\n", 2);
 		data->exit_status = 2;
 		return (NULL);
 	}

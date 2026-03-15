@@ -75,6 +75,8 @@ void	exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 	char	**envp;
 	char	**args;
 
+	signal(SIGQUIT, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 	if (prepare_child(data, cmd, pipeline, i) == -1)
 		exit(1);
 	if (is_builtin(cmd->cmd))

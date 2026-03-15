@@ -75,7 +75,6 @@ int	collect_heredoc_fork(t_redir *redir, char *delim)
 
 int	prepare_heredoc(t_data *data, t_cmd *cmd)
 {
-	t_redir	*redir;
 	t_cmd	*cur;
 
 	if (count_heredocs(cmd) > 16)
@@ -87,16 +86,8 @@ int	prepare_heredoc(t_data *data, t_cmd *cmd)
 	cur = cmd;
 	while (cur)
 	{
-		redir = cur->redir;
-		while (redir)
-		{
-			if (redir->type == REDIR_HEREDOC)
-			{
-				if (collect_heredoc(redir) == -1)
-					return (-1);
-			}
-			redir = redir->next;
-		}
+		if (collect_heredoc(cur->redir) == -1)
+			return (-1);
 		cur = cur->next;
 	}
 	return (0);
