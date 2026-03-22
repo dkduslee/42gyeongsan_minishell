@@ -12,10 +12,10 @@
 
 #include "minishell.h"
 
-int	count_heredocs(t_cmd *cmd)
+int count_heredocs(t_cmd *cmd)
 {
-	int		count;
-	t_redir	*redir;
+	int count;
+	t_redir *redir;
 
 	count = 0;
 	while (cmd)
@@ -32,10 +32,26 @@ int	count_heredocs(t_cmd *cmd)
 	return (count);
 }
 
-void	heredoc_child(int write_fd, char *delim)
+void write_line(int fd, char *line, t_data *data, int expand)
 {
-	char	*line;
-	int		line_count;
+	char *out;
+
+	if (expand)
+		out = expand_heredoc_line(line, data);
+	else
+		out = ft_strdup(line);
+	free(line);
+	if (!out)
+		return;
+	write(fd, out, ft_strlen(out));
+	write(fd, "\n", 1);
+	free(out);
+}
+
+void heredoc_child(int write_fd, char *delim, t_data *data, int expand)
+{
+	char *line;
+	int line_count;
 
 	signal(SIGINT, SIG_DFL);
 	line_count = 0;
@@ -45,29 +61,27 @@ void	heredoc_child(int write_fd, char *delim)
 		if (!line)
 		{
 			signal_in_message(line_count, delim);
-			break ;
+			break;
 		}
 		if (ft_strncmp(line, delim, ft_strlen(delim) + 1) == 0)
 		{
 			free(line);
-			break ;
+			break;
 		}
-		write(write_fd, line, ft_strlen(line));
-		write(write_fd, "\n", 1);
-		free(line);
+		write_line(write_fd, line, data, expand);
 		line_count++;
 	}
 	close(write_fd);
 	exit(0);
 }
 
-int	collect_heredoc(t_redir *redir)
+int collect_heredoc(t_redir *redir, t_data *data)
 {
 	while (redir)
 	{
 		if (redir->type == REDIR_HEREDOC)
 		{
-			if (collect_heredoc_fork(redir, redir->file) == -1)
+			if (collect_heredoc_fork(redir, redir->file, data) == -1)
 				return (-1);
 		}
 		redir = redir->next;

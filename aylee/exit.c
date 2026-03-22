@@ -12,9 +12,9 @@
 
 #include "minishell.h"
 
-static int	is_valid_num(const char *str)
+static int is_valid_num(const char *str)
 {
-	int	i;
+	int i;
 
 	if (!str || !*str)
 		return (0);
@@ -30,9 +30,53 @@ static int	is_valid_num(const char *str)
 	return (1);
 }
 
-int	builtin_exit(t_data *data, char **args)
+int long_range_check(char *str)
 {
-	int	status;
+	char *max;
+	char *min;
+	int i;
+	int len;
+
+	max = "9223372036854775807";
+	min = "9223372036854775808";
+	i = 0;
+	if (str[0] == '+' || str[0] == '-')
+		i++;
+	len = 0;
+	while (str[i + len])
+		len++;
+	if (len < 19)
+		return (1);
+	if (len > 19)
+		return (0);
+	if (str[0] == '-')
+		return (ft_strncmp(str + i, min, 19) <= 0);
+	return (ft_strncmp(str + i, max, 19) <= 0);
+}
+
+long long str_to_ll(char *str)
+{
+	long long result;
+	int sign;
+	int i;
+
+	result = 0;
+	sign = 1;
+	i = 0;
+	if (str[0] == '-' || str[0] == '+')
+	{
+		if (str[0] == '-')
+			sign = -1;
+		i++;
+	}
+	while (str[i])
+		result = result * 10 + (str[i++] - '0');
+	return (result * sign);
+}
+
+int builtin_exit(t_data *data, char **args)
+{
+	int status;
 
 	printf("exit\n");
 	if (!args || !args[0])
@@ -41,7 +85,7 @@ int	builtin_exit(t_data *data, char **args)
 		clean_up(data);
 		exit(status);
 	}
-	if (!is_valid_num(args[0]))
+	if (!is_valid_num(args[0]) || !long_range_check(args[0]))
 	{
 		print_error_msg(data, "exit", "numeric argument required", 2);
 		clean_up(data);
@@ -52,7 +96,7 @@ int	builtin_exit(t_data *data, char **args)
 		print_error_msg(data, "exit", "too many arguments", 1);
 		return (1);
 	}
-	status = ft_atoi(args[0]);
+	status = str_to_ll(args[0]);
 	clean_up(data);
-	exit(status);
+	exit((int)(status % 256));
 }

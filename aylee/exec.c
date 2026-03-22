@@ -12,9 +12,9 @@
 
 #include "minishell.h"
 
-int	set_fd_open(t_redir *redir)
+int set_fd_open(t_redir *redir)
 {
-	int	fd;
+	int fd;
 
 	fd = -1;
 	if (redir->type == REDIR_IN)
@@ -26,9 +26,9 @@ int	set_fd_open(t_redir *redir)
 	return (fd);
 }
 
-int	apply_redir(t_data *data, t_redir *redir)
+int apply_redir(t_data *data, t_redir *redir)
 {
-	int	fd;
+	int fd;
 
 	while (redir)
 	{
@@ -38,13 +38,11 @@ int	apply_redir(t_data *data, t_redir *redir)
 			dup2(redir->fd, STDIN_FILENO);
 			close(redir->fd);
 			redir = redir->next;
-			continue ;
+			redir->fd = -1;
+			continue;
 		}
 		if (fd == -1)
-		{
-			print_error(data, redir->file, errno, 1);
-			return (-1);
-		}
+			return (print_error(data, redir->file, errno, 1), -1);
 		if (redir->type == REDIR_IN)
 			dup2(fd, STDIN_FILENO);
 		else
@@ -55,7 +53,7 @@ int	apply_redir(t_data *data, t_redir *redir)
 	return (0);
 }
 
-int	prepare_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
+int prepare_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 {
 	if (i > 0)
 		dup2(pipeline->pipes[i - 1][0], STDIN_FILENO);
@@ -69,11 +67,11 @@ int	prepare_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 	return (0);
 }
 
-void	exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
+void exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 {
-	char	*cmd_path;
-	char	**envp;
-	char	**args;
+	char *cmd_path;
+	char **envp;
+	char **args;
 
 	signal(SIGQUIT, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
@@ -97,9 +95,9 @@ void	exec_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 	exit(126);
 }
 
-int	execute_pipeline(t_data *data, t_cmd *cmd)
+int execute_pipeline(t_data *data, t_cmd *cmd)
 {
-	t_pipes	pipeline;
+	t_pipes pipeline;
 
 	if (!cmd || !cmd->cmd)
 		return (1);

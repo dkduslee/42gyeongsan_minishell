@@ -12,21 +12,15 @@
 
 #include "minishell.h"
 
-t_data	*init_data(char **envp)
+void init_data(t_data *data, char **envp)
 {
-	t_data	*data;
-
-	data = (t_data *)malloc(sizeof(t_data));
-	if (!data)
-		return (NULL);
 	data->env = parse_env(envp);
 	data->exit_status = 0;
-	return (data);
 }
 
-int	count_cmd(t_cmd *cmd)
+int count_cmd(t_cmd *cmd)
 {
-	int	count;
+	int count;
 
 	count = 0;
 	while (cmd)
@@ -37,9 +31,9 @@ int	count_cmd(t_cmd *cmd)
 	return (count);
 }
 
-void	close_all_pipes(int **pipes, int count)
+void close_all_pipes(int **pipes, int count)
 {
-	int	i;
+	int i;
 
 	i = 0;
 	while (i < count)
@@ -50,9 +44,19 @@ void	close_all_pipes(int **pipes, int count)
 	}
 }
 
-void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
+void free_pid(t_pipes *pipeline)
 {
-	int	i;
+	if (pipeline->pipes)
+		free(pipeline->pipes);
+	if (pipeline->pids)
+		free(pipeline->pids);
+	pipeline->pipes = NULL;
+	pipeline->pids = NULL;
+}
+
+void init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
+{
+	int i;
 
 	pipeline->count = count_cmd(cmd);
 	pipeline->pids = malloc(sizeof(pid_t) * pipeline->count);
@@ -60,8 +64,8 @@ void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
 	if (!pipeline->pipes || !pipeline->pids)
 	{
 		print_error(data, "malloc", errno, 1);
-		pipeline->pipes = NULL;
-		return ;
+		free_pid(pipeline);
+		return;
 	}
 	i = 0;
 	while (i < pipeline->count - 1)
@@ -71,9 +75,8 @@ void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
 		{
 			print_error(data, "pipe", errno, 1);
 			close_all_pipes(pipeline->pipes, i);
-			free(pipeline->pipes);
-			pipeline->pipes = NULL;
-			return ;
+			free_pid(pipeline);
+			return;
 		}
 		i++;
 	}
