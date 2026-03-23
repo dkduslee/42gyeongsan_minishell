@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/21 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:16:25 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/23 11:54:10 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,8 @@ int apply_redir(t_data *data, t_redir *redir)
 		{
 			dup2(redir->fd, STDIN_FILENO);
 			close(redir->fd);
-			redir = redir->next;
 			redir->fd = -1;
+			redir = redir->next;
 			continue;
 		}
 		if (fd == -1)
