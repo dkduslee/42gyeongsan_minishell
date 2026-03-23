@@ -45,45 +45,47 @@ char	*str_append_char(char *s, char c)
 
 char	*expand_dollar(char *input, int *i, t_data *data)
 {
-	char	var[256];
-	int		j;
+	char	*var;
 	t_env	*node;
+	int		start;
 
 	(*i)++;
 	if (input[*i] == '?')
 		return ((*i)++, ft_itoa(data->exit_status));
-	j = 0;
+	start = *i;
 	if (ft_isalpha(input[*i]) || input[*i] == '_')
-		while (input[*i] && (ft_isalnum(input[*i]) || input[*i] == '_')
-			&& j < 255)
-			var[j++] = input[(*i)++];
-	var[j] = '\0';
-	if (j == 0)
+		while (input[*i] && (ft_isalnum(input[*i]) || input[*i] == '_'))
+			(*i)++;
+	if (*i == start)
 		return (ft_strdup("$"));
+	var = ft_substr(input, start, *i - start);
 	node = find_env_exact(data->env, var);
+	free(var);
 	if (!node || !node->value)
 		return (ft_strdup(""));
 	return (ft_strdup(node->value));
 }
 
-char	*expand_heredoc_line(char *line, t_data *data)
+char	*expand_line(char *line, t_data *data)
 {
 	char	*res;
 	char	*exp;
 	int		i;
+	int		start;
 
 	res = NULL;
 	i = 0;
 	while (line[i])
 	{
-		if (line[i] == '$')
-		{
-			exp = expand_dollar(line, &i, data);
-			res = str_append(res, exp);
-			free(exp);
-		}
+		start = i;
+		while (line[i] && line[i] != '$')
+			i++;
+		if (i > start)
+			exp = ft_substr(line, start, i - start);
 		else
-			res = str_append_char(res, line[i++]);
+			exp = expand_dollar(line, &i, data);
+		res = str_append(res, exp);
+		free(exp);
 	}
 	if (!res)
 		return (ft_strdup(""));
