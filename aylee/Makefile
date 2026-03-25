@@ -19,8 +19,9 @@ LDFLAGS = -lreadline -L/opt/homebrew/opt/readline/lib
 SRCS = built_in.c cmd_path.c command.c env.c exec.c exec2.c exit.c export.c \
 		heredoc.c image.c main_init.c main.c make_node.c pipe.c utils.c
 
-PARSE_SRCS = ../parse/expand.c ../parse/lexer.c ../parse/lexer2.c \
-		../parse/parse.c ../parse/parse2.c ../parse/signals.c
+PARSE_SRCS = ../parse/error.c ../parse/expand.c ../parse/lex_utils.c \
+		../parse/lexer.c ../parse/lexer_quote.c ../parse/parse.c \
+		../parse/parse2.c ../parse/signals.c
 
 OBJS = $(SRCS:.c=.o)
 PARSE_OBJS = $(PARSE_SRCS:.c=.o)

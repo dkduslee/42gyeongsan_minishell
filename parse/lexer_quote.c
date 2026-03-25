@@ -52,3 +52,31 @@ void	lex_double_quote(char *input, int *i, t_lex *lx, t_data *data)
 		lx->error = 1;
 	lx->quoted = 1;
 }
+
+void	lex_char_expand(char *input, int *i, t_lex *lx, t_data *data)
+{
+	char	*exp;
+
+	if (input[*i] == '$')
+		exp = expand_dollar(input, i, data);
+	else
+	{
+		exp = expand_tilde(data);
+		(*i)++;
+	}
+	lx->buf = str_append(lx->buf, exp);
+	free(exp);
+}
+
+void	lex_char_plain(char *input, int *i, t_lex *lx)
+{
+	char	*chunk;
+	int		start;
+
+	start = *i;
+	while (input[*i] && !ft_strchr(" \t|<>&;()*$'\"", input[*i]))
+		(*i)++;
+	chunk = ft_substr(input, start, *i - start);
+	lx->buf = str_append(lx->buf, chunk);
+	free(chunk);
+}

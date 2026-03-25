@@ -39,8 +39,10 @@ void	free_tokens(t_token *head);
 void	flush_word(t_lex *lx);
 
 /* lexer_quote.c */
-void	lex_single_quote(char *in, int *i, t_lex *lx);
-void	lex_double_quote(char *in, int *i, t_lex *lx, t_data *data);
+void	lex_single_quote(char *input, int *i, t_lex *lx);
+void	lex_double_quote(char *input, int *i, t_lex *lx, t_data *data);
+void	lex_char_expand(char *input, int *i, t_lex *lx, t_data *data);
+void	lex_char_plain(char *input, int *i, t_lex *lx);
 
 /* parse.c → parse2.c */
 void	add_argv(t_cmd *cmd, char *word);

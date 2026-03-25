@@ -63,29 +63,15 @@ static void	lex_op(char *input, int *i, t_lex *lx)
 
 static void	lex_char(char *input, int *i, t_lex *lx, t_data *data)
 {
-	char	*exp;
-	char	*chunk;
-	int		start;
-
 	if (input[*i] == '\'')
 		lex_single_quote(input, i, lx);
 	else if (input[*i] == '"')
 		lex_double_quote(input, i, lx, data);
-	else if (input[*i] == '$')
-	{
-		exp = expand_dollar(input, i, data);
-		lx->buf = str_append(lx->buf, exp);
-		free(exp);
-	}
+	else if (input[*i] == '$' || (input[*i] == '~' && !lx->buf
+			&& (input[*i + 1] == '/' || input[*i + 1] == '\0')))
+		lex_char_expand(input, i, lx, data);
 	else
-	{
-		start = *i;
-		while (input[*i] && !ft_strchr(" \t|<>&;()*$'\"", input[*i]))
-			(*i)++;
-		chunk = ft_substr(input, start, *i - start);
-		lx->buf = str_append(lx->buf, chunk);
-		free(chunk);
-	}
+		lex_char_plain(input, i, lx);
 }
 
 static int	lex_switch(char *input, int *i, t_lex *lx, t_data *data)

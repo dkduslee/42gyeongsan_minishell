@@ -37,7 +37,7 @@ void write_line(int fd, char *line, t_data *data, int expand)
 	char *out;
 
 	if (expand)
-		out = expand_heredoc_line(line, data);
+		out = expand_line(line, data);
 	else
 		out = ft_strdup(line);
 	free(line);

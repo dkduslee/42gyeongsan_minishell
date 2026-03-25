@@ -168,7 +168,8 @@ t_token *new_token(t_tok_type type, char *str);
 char *str_append(char *s, char *add);
 char *str_append_char(char *s, char c);
 char *expand_dollar(char *input, int *i, t_data *data);
-char *expand_heredoc_line(char *line, t_data *data);
+char *expand_tilde(t_data *data);
+char *expand_line(char *line, t_data *data);
 void signal_interactive(void);
 
 #endif

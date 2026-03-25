@@ -35,6 +35,16 @@ char	*str_append(char *s, char *add)
 }
 
 
+char	*expand_tilde(t_data *data)
+{
+	t_env	*node;
+
+	node = find_env_exact(data->env, "HOME");
+	if (!node || !node->value)
+		return (ft_strdup("~"));
+	return (ft_strdup(node->value));
+}
+
 char	*expand_dollar(char *input, int *i, t_data *data)
 {
 	char	*var;
