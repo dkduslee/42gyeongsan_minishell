@@ -24,10 +24,13 @@ typedef struct s_lex
 	int			error;
 }	t_lex;
 
+/* expand.c */
+char	*expand_line(char *line, t_data *data);
+
 /* lexer.c → lexer2.c */
 void	flush_word(t_lex *lx);
-void	lex_sq(char *in, int *i, t_lex *lx);
-void	lex_dq(char *in, int *i, t_lex *lx, t_data *data);
+void	lex_single_quote(char *in, int *i, t_lex *lx);
+void	lex_double_quote(char *in, int *i, t_lex *lx, t_data *data);
 
 /* parse.c → parse2.c */
 void	add_argv(t_cmd *cmd, char *word);

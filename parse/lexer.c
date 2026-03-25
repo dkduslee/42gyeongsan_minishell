@@ -58,14 +58,18 @@ void	flush_word(t_lex *lx)
 	lx->tail = tok;
 }
 
-void	lex_sq(char *input, int *i, t_lex *lx)
+void	lex_single_quote(char *input, int *i, t_lex *lx)
 {
+	char	*chunk;
+	int		start;
+
 	(*i)++;
+	start = *i;
 	while (input[*i] && input[*i] != '\'')
-	{
-		lx->buf = str_append_char(lx->buf, input[*i]);
 		(*i)++;
-	}
+	chunk = ft_substr(input, start, *i - start);
+	lx->buf = str_append(lx->buf, chunk);
+	free(chunk);
 	if (input[*i] == '\'')
 		(*i)++;
 	else
@@ -73,25 +77,21 @@ void	lex_sq(char *input, int *i, t_lex *lx)
 	lx->quoted = 1;
 }
 
-void	lex_dq(char *input, int *i, t_lex *lx, t_data *data)
+void	lex_double_quote(char *input, int *i, t_lex *lx, t_data *data)
 {
+	char	*chunk;
 	char	*exp;
+	int		start;
 
 	(*i)++;
+	start = *i;
 	while (input[*i] && input[*i] != '"')
-	{
-		if (input[*i] == '$')
-		{
-			exp = expand_dollar(input, i, data);
-			lx->buf = str_append(lx->buf, exp);
-			free(exp);
-		}
-		else
-		{
-			lx->buf = str_append_char(lx->buf, input[*i]);
-			(*i)++;
-		}
-	}
+		(*i)++;
+	chunk = ft_substr(input, start, *i - start);
+	exp = expand_line(chunk, data);
+	free(chunk);
+	lx->buf = str_append(lx->buf, exp);
+	free(exp);
 	if (input[*i] == '"')
 		(*i)++;
 	else

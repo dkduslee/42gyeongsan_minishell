@@ -64,9 +64,9 @@ static void	lex_char(char *in, int *i, t_lex *lx, t_data *data)
 	char	*exp;
 
 	if (in[*i] == '\'')
-		lex_sq(in, i, lx);
+		lex_single_quote(in, i, lx);
 	else if (in[*i] == '"')
-		lex_dq(in, i, lx, data);
+		lex_double_quote(in, i, lx, data);
 	else if (in[*i] == '$')
 	{
 		exp = expand_dollar(in, i, data);
