@@ -34,14 +34,6 @@ char	*str_append(char *s, char *add)
 	return (res);
 }
 
-char	*str_append_char(char *s, char c)
-{
-	char	buf[2];
-
-	buf[0] = c;
-	buf[1] = '\0';
-	return (str_append(s, buf));
-}
 
 char	*expand_dollar(char *input, int *i, t_data *data)
 {

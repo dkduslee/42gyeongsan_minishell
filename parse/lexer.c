@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   lexer.c                                            :+:      :+:    :+:   */
+/*   lexer2.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: seoyeoki <seoyeoki@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,45 +12,48 @@
 
 #include "parse_int.h"
 
-t_token	*new_token(t_tok_type type, char *str)
+static void	lex_unsupported(char *input, int *i, t_lex *lx)
+{
+	char	tok[3];
+	int		j;
+	char	c;
+	char	next;
+
+	c = input[*i];
+	next = input[*i + 1];
+	j = 0;
+	tok[j++] = c;
+	if ((c == '&' && next == '&')
+		|| (c == ';' && next == ';')
+		|| (c == '|' && next == '|'))
+		tok[j++] = next;
+	tok[j] = '\0';
+	lx->err_token = ft_strdup(tok);
+	lx->error = 2;
+}
+
+static void	lex_op(char *input, int *i, t_lex *lx)
 {
 	t_token	*tok;
 
-	tok = malloc(sizeof(t_token));
-	if (!tok)
-		return (NULL);
-	tok->type = type;
-	tok->str = str;
-	tok->quoted = 0;
-	tok->next = NULL;
-	return (tok);
-}
-
-void	free_tokens(t_token *head)
-{
-	t_token	*next;
-
-	while (head)
+	tok = NULL;
+	if (input[*i] == '|')
+		tok = new_token(TOK_PIPE, ft_strdup("|"));
+	else if (input[*i] == '<' && input[*i + 1] == '<')
 	{
-		next = head->next;
-		free(head->str);
-		free(head);
-		head = next;
+		tok = new_token(TOK_HEREDOC, ft_strdup("<<"));
+		(*i)++;
 	}
-}
-
-void	flush_word(t_lex *lx)
-{
-	t_token	*tok;
-
-	if (!lx->buf)
-		return ;
-	tok = new_token(TOK_WORD, lx->buf);
-	if (!tok)
-		return ;
-	tok->quoted = lx->quoted;
-	lx->buf = NULL;
-	lx->quoted = 0;
+	else if (input[*i] == '>' && input[*i + 1] == '>')
+	{
+		tok = new_token(TOK_REDIR_APPEND, ft_strdup(">>"));
+		(*i)++;
+	}
+	else if (input[*i] == '<')
+		tok = new_token(TOK_REDIR_IN, ft_strdup("<"));
+	else if (input[*i] == '>')
+		tok = new_token(TOK_REDIR_OUT, ft_strdup(">"));
+	(*i)++;
 	if (!lx->head)
 		lx->head = tok;
 	else
@@ -58,43 +61,85 @@ void	flush_word(t_lex *lx)
 	lx->tail = tok;
 }
 
-void	lex_single_quote(char *input, int *i, t_lex *lx)
+static void	lex_char(char *input, int *i, t_lex *lx, t_data *data)
 {
+	char	*exp;
 	char	*chunk;
 	int		start;
 
-	(*i)++;
-	start = *i;
-	while (input[*i] && input[*i] != '\'')
-		(*i)++;
-	chunk = ft_substr(input, start, *i - start);
-	lx->buf = str_append(lx->buf, chunk);
-	free(chunk);
 	if (input[*i] == '\'')
-		(*i)++;
+		lex_single_quote(input, i, lx);
+	else if (input[*i] == '"')
+		lex_double_quote(input, i, lx, data);
+	else if (input[*i] == '$')
+	{
+		exp = expand_dollar(input, i, data);
+		lx->buf = str_append(lx->buf, exp);
+		free(exp);
+	}
 	else
-		lx->error = 1;
-	lx->quoted = 1;
+	{
+		start = *i;
+		while (input[*i] && !ft_strchr(" \t|<>&;()*$'\"", input[*i]))
+			(*i)++;
+		chunk = ft_substr(input, start, *i - start);
+		lx->buf = str_append(lx->buf, chunk);
+		free(chunk);
+	}
 }
 
-void	lex_double_quote(char *input, int *i, t_lex *lx, t_data *data)
+static int	lex_switch(char *input, int *i, t_lex *lx, t_data *data)
 {
-	char	*chunk;
-	char	*exp;
-	int		start;
+	char	c;
+	char	next;
 
-	(*i)++;
-	start = *i;
-	while (input[*i] && input[*i] != '"')
+	c = input[*i];
+	next = input[*i + 1];
+	if (c == ' ' || c == '\t')
+	{
+		flush_word(lx);
 		(*i)++;
-	chunk = ft_substr(input, start, *i - start);
-	exp = expand_line(chunk, data);
-	free(chunk);
-	lx->buf = str_append(lx->buf, exp);
-	free(exp);
-	if (input[*i] == '"')
-		(*i)++;
-	else
-		lx->error = 1;
-	lx->quoted = 1;
+		return (0);
+	}
+	if (ft_strchr("&;()*", c) || (c == '|' && next == '|'))
+	{
+		flush_word(lx);
+		lex_unsupported(input, i, lx);
+		return (1);
+	}
+	if (c == '|' || c == '<' || c == '>')
+	{
+		flush_word(lx);
+		lex_op(input, i, lx);
+		return (0);
+	}
+	lex_char(input, i, lx, data);
+	return (0);
+}
+
+t_token	*lexer(char *input, t_data *data)
+{
+	t_lex	lx;
+	int		i;
+
+	init_lex(&lx);
+	i = 0;
+	while (input[i])
+		if (lex_switch(input, &i, &lx, data))
+			break ;
+	flush_word(&lx);
+	if (lx.error)
+	{
+		free_tokens(lx.head);
+		if (lx.error == 1)
+			err_unclosed_quote();
+		else if (lx.error == 2)
+		{
+			err_syntax_token(lx.err_token);
+			free(lx.err_token);
+		}
+		data->exit_status = 2;
+		return (NULL);
+	}
+	return (lx.head);
 }

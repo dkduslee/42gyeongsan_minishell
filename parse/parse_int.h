@@ -32,8 +32,13 @@ void	err_unclosed_quote(void);
 /* expand.c */
 char	*expand_line(char *line, t_data *data);
 
-/* lexer.c → lexer2.c */
+/* lex_utils.c */
+void	init_lex(t_lex *lx);
+t_token	*new_token(t_tok_type type, char *str);
+void	free_tokens(t_token *head);
 void	flush_word(t_lex *lx);
+
+/* lexer_quote.c */
 void	lex_single_quote(char *in, int *i, t_lex *lx);
 void	lex_double_quote(char *in, int *i, t_lex *lx, t_data *data);
 
