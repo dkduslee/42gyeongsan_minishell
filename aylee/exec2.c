@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 18:50:42 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:19:14 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/23 13:59:17 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,12 +30,6 @@ int make_right_path(const char *cmd, char **path_dirs, char **full_path)
 		i++;
 	}
 	return (0);
-}
-
-void sigint_handler(int signum) //////////임시 메모리 빵꾸남.
-{
-	(void)signum;
-	write(STDOUT_FILENO, "\n", 1);
 }
 
 void signal_in_message(int line_count, char *delim)
@@ -66,7 +60,7 @@ int collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 	close(fd[1]);
 	signal(SIGINT, SIG_IGN);
 	waitpid(pid, &status, 0);
-	signal(SIGINT, sigint_handler); // 따로 양식 맞춰서 넣어야함.
+	// signal(SIGINT, SIG_DFL);
 	if (WIFSIGNALED(status))
 		return (close(fd[0]), -1);
 	redir->fd = fd[0];
