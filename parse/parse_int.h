@@ -13,7 +13,7 @@
 #ifndef PARSE_INT_H
 # define PARSE_INT_H
 
-# include "../aylee/minishell.h"
+# include "../minishell.h"
 
 typedef struct s_lex
 {

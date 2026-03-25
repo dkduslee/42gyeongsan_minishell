@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../aylee/minishell.h"
+#include "../minishell.h"
 
 static t_env	*find_env_exact(t_env *head, const char *key)
 {
