@@ -45,6 +45,14 @@ minishell$
 | `make fclean` | Remove object files and binary |
 | `make re` | Full recompile |
 
+### Memory leak check (Valgrind)
+
+`readline` has known internal memory leaks that are not caused by our code. Use the provided suppression file to filter them out:
+
+```bash
+valgrind --suppressions=readline.supp ./minishell
+```
+
 ## Features
 
 - Interactive prompt with command history (arrow keys supported)
