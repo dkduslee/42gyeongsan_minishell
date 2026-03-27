@@ -3,7 +3,7 @@ CFLAGS	= -Wall -Wextra -Werror -I.. -I/opt/homebrew/opt/readline/include
 AR		= ar rcs
 
 SRCS	= error.c expand.c lexer_utils.c lexer.c lexer_quote.c \
-		parse.c parse2.c signals.c
+		parse.c parse_utils.c signals.c
 OBJS	= $(SRCS:.c=.o)
 LIB		= libparse.a
 

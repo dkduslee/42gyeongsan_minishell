@@ -45,7 +45,7 @@ void	lex_double_quote(char *input, int *i, t_lex *lx, t_data *data);
 void	lex_char_expand(char *input, int *i, t_lex *lx, t_data *data);
 void	lex_char_plain(char *input, int *i, t_lex *lx);
 
-/* parse.c → parse2.c */
+/* parse_utils.c */
 void	add_argv(t_cmd *cmd, char *word);
 void	redir_append(t_cmd *cmd, t_redir_type type, char *file, int quoted);
 
