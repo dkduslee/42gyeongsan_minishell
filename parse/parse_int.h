@@ -32,7 +32,7 @@ void	err_unclosed_quote(void);
 /* expand.c */
 char	*expand_line(char *line, t_data *data);
 
-/* lex_utils.c */
+/* lexer_utils.c */
 void	init_lex(t_lex *lx);
 t_token	*new_token(t_tok_type type, char *str);
 void	free_tokens(t_token *head);
