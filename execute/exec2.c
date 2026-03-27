@@ -60,7 +60,6 @@ int	collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 	close(fd[1]);
 	signal(SIGINT, SIG_IGN);
 	waitpid(pid, &status, 0);
-	// signal(SIGINT, SIG_DFL);
 	if (WIFSIGNALED(status))
 		return (close(fd[0]), -1);
 	redir->fd = fd[0];
