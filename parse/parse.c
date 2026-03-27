@@ -45,7 +45,7 @@ static int	check_syntax(t_token *tok, t_data *data)
 	return (1);
 }
 
-static t_token	*add_redir(t_cmd *cmd, t_token *tok)
+static void	add_redir(t_cmd *cmd, t_token *tok)
 {
 	t_redir_type	type;
 	t_token			*file;
@@ -59,7 +59,6 @@ static t_token	*add_redir(t_cmd *cmd, t_token *tok)
 	else if (tok->type == TOK_HEREDOC)
 		type = REDIR_HEREDOC;
 	redir_append(cmd, type, file->str, file->quoted);
-	return (file->next);
 }
 
 static t_cmd	*build_cmds(t_token *tok)
@@ -82,8 +81,8 @@ static t_cmd	*build_cmds(t_token *tok)
 			add_argv(cur, tok->str);
 		else
 		{
-			tok = add_redir(cur, tok);
-			continue ;
+			add_redir(cur, tok);
+			tok = tok->next;
 		}
 		tok = tok->next;
 	}
