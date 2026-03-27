@@ -23,3 +23,10 @@ void	err_unclosed_quote(void)
 {
 	ft_putstr_fd("minishell: syntax error: unclosed quote\n", 2);
 }
+
+int	syntax_err(t_data *data, char *msg)
+{
+	err_syntax_token(msg);
+	data->exit_status = 2;
+	return (-1);
+}

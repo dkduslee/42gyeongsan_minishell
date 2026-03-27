@@ -12,13 +12,6 @@
 
 #include "parse_int.h"
 
-static int	syntax_err(t_data *data, char *msg)
-{
-	err_syntax_token(msg);
-	data->exit_status = 2;
-	return (-1);
-}
-
 static int	check_syntax(t_token *tok, t_data *data)
 {
 	t_tok_type	prev;

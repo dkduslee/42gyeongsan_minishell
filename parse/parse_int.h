@@ -28,6 +28,7 @@ typedef struct s_lex
 /* error.c */
 void	err_syntax_token(char *token);
 void	err_unclosed_quote(void);
+int		syntax_err(t_data *data, char *msg);
 
 /* expand.c */
 char	*expand_line(char *line, t_data *data);
