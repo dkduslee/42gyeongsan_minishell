@@ -1,6 +1,7 @@
 *.o
 *.a
-aylee/minishell
+minishell
+minishell_asan
 aylee_new/
 .DS_Store
 .idea/
