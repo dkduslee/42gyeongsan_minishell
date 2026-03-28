@@ -6,16 +6,16 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/02 19:17:25 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:19:11 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:29:11 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int count_heredocs(t_cmd *cmd)
+int	count_heredocs(t_cmd *cmd)
 {
-	int count;
-	t_redir *redir;
+	int		count;
+	t_redir	*redir;
 
 	count = 0;
 	while (cmd)
@@ -32,26 +32,26 @@ int count_heredocs(t_cmd *cmd)
 	return (count);
 }
 
-void write_line(int fd, char *line, t_data *data, int expand)
+void	write_line(int fd, char *line, t_data *data, int expand)
 {
-	char *out;
+	char	*out;
 
 	if (expand)
-		out = expand_heredoc_line(line, data);
+		out = expand_line(line, data);
 	else
 		out = ft_strdup(line);
 	free(line);
 	if (!out)
-		return;
+		return ;
 	write(fd, out, ft_strlen(out));
 	write(fd, "\n", 1);
 	free(out);
 }
 
-void heredoc_child(int write_fd, char *delim, t_data *data, int expand)
+void	heredoc_child(int write_fd, char *delim, t_data *data, int expand)
 {
-	char *line;
-	int line_count;
+	char	*line;
+	int		line_count;
 
 	signal(SIGINT, SIG_DFL);
 	line_count = 0;
@@ -61,12 +61,12 @@ void heredoc_child(int write_fd, char *delim, t_data *data, int expand)
 		if (!line)
 		{
 			signal_in_message(line_count, delim);
-			break;
+			break ;
 		}
 		if (ft_strncmp(line, delim, ft_strlen(delim) + 1) == 0)
 		{
 			free(line);
-			break;
+			break ;
 		}
 		write_line(write_fd, line, data, expand);
 		line_count++;
@@ -75,7 +75,7 @@ void heredoc_child(int write_fd, char *delim, t_data *data, int expand)
 	exit(0);
 }
 
-int collect_heredoc(t_redir *redir, t_data *data)
+int	collect_heredoc(t_redir *redir, t_data *data)
 {
 	while (redir)
 	{

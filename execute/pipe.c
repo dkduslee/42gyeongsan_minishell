@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 15:40:32 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/01 16:20:42 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/23 13:49:09 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,15 @@ static void	no_pipe_child(t_data *data, t_cmd *cmd)
 	signal(SIGQUIT, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 	if (prepare_heredoc(data, cmd) == -1)
+	{
+		clean_up(data, NULL);
 		exit(1);
+	}
 	if (apply_redir(data, cmd->redir) == -1)
+	{
+		clean_up(data, NULL);
 		exit(1);
+	}
 	exit(execute_command(data, cmd));
 }
 

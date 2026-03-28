@@ -1,31 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   signals.c                                          :+:      :+:    :+:   */
+/*   error.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: seoyeoki <seoyeoki@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 00:00:00 by seoyeoki          #+#    #+#             */
-/*   Updated: 2026/03/03 00:00:00 by seoyeoki         ###   ########.fr       */
+/*   Created: 2026/03/25 00:00:00 by seoyeoki          #+#    #+#             */
+/*   Updated: 2026/03/25 00:00:00 by seoyeoki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "parse_int.h"
 
-volatile sig_atomic_t	g_signal;
-
-static void	sigint_handler(int sig)
+void	err_syntax_token(char *token)
 {
-	g_signal = sig;
-	write(STDOUT_FILENO, "\n", 1);
-	rl_on_new_line();
-	rl_replace_line("", 0);
-	rl_redisplay();
+	ft_putstr_fd("minishell: syntax error near unexpected token `", 2);
+	ft_putstr_fd(token, 2);
+	ft_putstr_fd("'\n", 2);
 }
 
-void	signal_interactive(void)
+void	err_unclosed_quote(void)
 {
-	signal(SIGINT, sigint_handler);
-	signal(SIGQUIT, SIG_IGN);
+	ft_putstr_fd("minishell: syntax error: unclosed quote\n", 2);
 }
 
+int	syntax_err(t_data *data, char *token)
+{
+	err_syntax_token(token);
+	data->exit_status = 2;
+	return (-1);
+}

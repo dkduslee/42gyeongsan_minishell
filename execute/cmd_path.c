@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/02 19:08:10 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:16:47 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:25:51 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ char	*find_command_path(char *cmd, t_env *env)
 	return (free_split(dirs), NULL);
 }
 
-char	**get_execve_args(t_cmd *cmd) //합치는 코드
+char	**get_execve_args(t_cmd *cmd)
 {
 	char	**args;
 	int		argc;

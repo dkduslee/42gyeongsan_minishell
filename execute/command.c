@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/02 13:27:25 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:03:12 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:08:08 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,8 +88,8 @@ int	execute_builtin(t_data *data, t_cmd *cmd)
 	else if (ft_strncmp(cmd->cmd, "unset", 6) == 0)
 		return (builtin_unset(data, cmd->argv));
 	else if (ft_strncmp(cmd->cmd, "exit", 5) == 0)
-		return (builtin_exit(data, cmd->argv));
+		return (builtin_exit(data, cmd, cmd->argv));
 	else if (ft_strncmp(cmd->cmd, "env", 4) == 0)
-		return (builtin_env(data));
+		return (builtin_env(data, cmd->argv));
 	return (-1);
 }

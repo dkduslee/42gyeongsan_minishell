@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   parse.c                                            :+:      :+:    :+:   */
+/*   parse2.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: seoyeoki <seoyeoki@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,104 +12,108 @@
 
 #include "parse_int.h"
 
-t_cmd	*new_cmd(void)
+static int	check_syntax(t_token *tok, t_data *data)
 {
-	t_cmd	*cmd;
+	t_tok_type	prev;
 
-	cmd = malloc(sizeof(t_cmd));
-	if (!cmd)
-		return (NULL);
-	cmd->cmd = NULL;
-	cmd->argv = NULL;
-	cmd->redir = NULL;
-	cmd->next = NULL;
-	return (cmd);
-}
-
-void	free_redir_list(t_redir *redir)
-{
-	t_redir	*next;
-
-	while (redir)
+	if (!tok)
+		return (0);
+	if (tok->type == TOK_PIPE)
+		return (syntax_err(data, "|"));
+	prev = TOK_WORD;
+	while (tok)
 	{
-		next = redir->next;
-		free(redir->file);
-		free(redir);
-		redir = next;
-	}
-}
-
-void	free_cmd_list(t_cmd *cmd)
-{
-	t_cmd	*next;
-	int		i;
-
-	while (cmd)
-	{
-		next = cmd->next;
-		free(cmd->cmd);
-		if (cmd->argv)
+		if (tok->type == TOK_PIPE && prev == TOK_PIPE)
+			return (syntax_err(data, "|"));
+		if (tok->type != TOK_WORD && tok->type != TOK_PIPE)
 		{
-			i = 0;
-			while (cmd->argv[i])
-				free(cmd->argv[i++]);
-			free(cmd->argv);
+			if (!tok->next || tok->next->type != TOK_WORD)
+				return (syntax_err(data, "newline"));
+			if (prev == TOK_PIPE)
+				return (syntax_err(data, tok->str));
 		}
-		free_redir_list(cmd->redir);
-		free(cmd);
-		cmd = next;
+		prev = tok->type;
+		tok = tok->next;
 	}
+	if (prev == TOK_PIPE)
+		return (syntax_err(data, "|"));
+	return (1);
 }
 
-void	add_argv(t_cmd *cmd, char *word)
+static t_token	*fill_segment(t_cmd *cur, t_token *tok)
 {
-	int		count;
-	char	**new_argv;
-	int		i;
+	int	idx;
 
-	if (!cmd->cmd)
+	idx = 0;
+	while (tok && tok->type != TOK_PIPE)
 	{
-		cmd->cmd = ft_strdup(word);
-		return ;
+		if (tok->type == TOK_WORD)
+		{
+			if (!cur->cmd)
+				cur->cmd = ft_strdup(tok->str);
+			else
+				cur->argv[idx++] = ft_strdup(tok->str);
+		}
+		else
+		{
+			redir_from_token(cur, tok);
+			tok = tok->next;
+		}
+		tok = tok->next;
 	}
-	count = 0;
-	while (cmd->argv && cmd->argv[count])
-		count++;
-	new_argv = malloc(sizeof(char *) * (count + 2));
-	if (!new_argv)
-		return ;
-	i = 0;
-	while (i < count)
-	{
-		new_argv[i] = cmd->argv[i];
-		i++;
-	}
-	new_argv[count] = ft_strdup(word);
-	new_argv[count + 1] = NULL;
-	free(cmd->argv);
-	cmd->argv = new_argv;
+	return (tok);
 }
 
-void	redir_append(t_cmd *cmd, t_redir_type type, char *file, int quoted)
+static t_cmd	*build_cmds(t_token *tok)
 {
-	t_redir	*node;
-	t_redir	*cur;
+	t_cmd	*head;
+	t_cmd	*prev;
+	t_cmd	*cur;
 
-	node = malloc(sizeof(t_redir));
-	if (!node)
-		return ;
-	node->type = type;
-	node->file = ft_strdup(file);
-	node->fd = -1;
-	node->quoted = quoted;
-	node->next = NULL;
-	if (!cmd->redir)
+	head = NULL;
+	prev = NULL;
+	while (tok)
 	{
-		cmd->redir = node;
-		return ;
+		cur = new_cmd();
+		if (!cur)
+			return (free_cmd_list(head), NULL);
+		if (!alloc_argv(cur, tok))
+			return (free_cmd_list(head), NULL);
+		if (!head)
+			head = cur;
+		else
+			prev->next = cur;
+		prev = cur;
+		tok = fill_segment(cur, tok);
+		if (tok)
+			tok = tok->next;
 	}
-	cur = cmd->redir;
-	while (cur->next)
-		cur = cur->next;
-	cur->next = node;
+	return (head);
+}
+
+t_cmd	*parse_pipeline(char *input, t_data *data)
+{
+	t_token	*tok;
+	t_cmd	*cmd;
+	int		chk;
+
+	if (!input || !*input)
+		return (NULL);
+	tok = lexer(input, data);
+	if (!tok)
+		return (NULL);
+	chk = check_syntax(tok, data);
+	if (chk <= 0)
+	{
+		free_tokens(tok);
+		return (NULL);
+	}
+	cmd = build_cmds(tok);
+	free_tokens(tok);
+	if (cmd && !cmd->cmd && !cmd->redir)
+	{
+		free_cmd_list(cmd);
+		return (NULL);
+	}
+	return (cmd);
 }

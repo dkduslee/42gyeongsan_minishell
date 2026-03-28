@@ -6,16 +6,16 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 18:50:42 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:19:14 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:27:00 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int make_right_path(const char *cmd, char **path_dirs, char **full_path)
+int	make_right_path(const char *cmd, char **path_dirs, char **full_path)
 {
-	char *tmp;
-	int i;
+	char	*tmp;
+	int		i;
 
 	i = 0;
 	while (path_dirs[i])
@@ -32,13 +32,7 @@ int make_right_path(const char *cmd, char **path_dirs, char **full_path)
 	return (0);
 }
 
-void sigint_handler(int signum) //////////임시 메모리 빵꾸남.
-{
-	(void)signum;
-	write(STDOUT_FILENO, "\n", 1);
-}
-
-void signal_in_message(int line_count, char *delim)
+void	signal_in_message(int line_count, char *delim)
 {
 	ft_putstr_fd("minishell: warning: here-document at line ", STDOUT_FILENO);
 	ft_putnbr_fd(line_count, STDOUT_FILENO);
@@ -47,11 +41,11 @@ void signal_in_message(int line_count, char *delim)
 	ft_putstr_fd("')\n", STDOUT_FILENO);
 }
 
-int collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
+int	collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 {
-	pid_t pid;
-	int status;
-	int fd[2];
+	pid_t	pid;
+	int		status;
+	int		fd[2];
 
 	if (pipe(fd) == -1)
 		return (-1);
@@ -66,21 +60,20 @@ int collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 	close(fd[1]);
 	signal(SIGINT, SIG_IGN);
 	waitpid(pid, &status, 0);
-	signal(SIGINT, sigint_handler); // 따로 양식 맞춰서 넣어야함.
 	if (WIFSIGNALED(status))
 		return (close(fd[0]), -1);
 	redir->fd = fd[0];
 	return (0);
 }
 
-int prepare_heredoc(t_data *data, t_cmd *cmd)
+int	prepare_heredoc(t_data *data, t_cmd *cmd)
 {
-	t_cmd *cur;
+	t_cmd	*cur;
 
 	if (count_heredocs(cmd) > 16)
 	{
-		print_error_msg(data, "heredoc",
-						"maximum here-document count exceeded", 1);
+		print_error_msg(data, "heredoc", \
+			"maximum here-document count exceeded", 1);
 		return (-1);
 	}
 	cur = cmd;

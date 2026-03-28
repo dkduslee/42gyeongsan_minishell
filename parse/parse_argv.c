@@ -1,31 +1,43 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   signals.c                                          :+:      :+:    :+:   */
+/*   parse_argv.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: seoyeoki <seoyeoki@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 00:00:00 by seoyeoki          #+#    #+#             */
-/*   Updated: 2026/03/03 00:00:00 by seoyeoki         ###   ########.fr       */
+/*   Created: 2026/03/28 00:00:00 by seoyeoki          #+#    #+#             */
+/*   Updated: 2026/03/28 00:00:00 by seoyeoki         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "parse_int.h"
 
-volatile sig_atomic_t	g_signal;
-
-static void	sigint_handler(int sig)
+int	count_words(t_token *tok)
 {
-	g_signal = sig;
-	write(STDOUT_FILENO, "\n", 1);
-	rl_on_new_line();
-	rl_replace_line("", 0);
-	rl_redisplay();
+	int	count;
+
+	count = 0;
+	while (tok && tok->type != TOK_PIPE)
+	{
+		if (tok->type == TOK_WORD)
+			count++;
+		else
+			tok = tok->next;
+		tok = tok->next;
+	}
+	return (count);
 }
 
-void	signal_interactive(void)
+int	alloc_argv(t_cmd *cmd, t_token *tok)
 {
-	signal(SIGINT, sigint_handler);
-	signal(SIGQUIT, SIG_IGN);
-}
+	int	wc;
 
+	wc = count_words(tok);
+	if (wc <= 1)
+		return (1);
+	cmd->argv = malloc(sizeof(char *) * wc);
+	if (!cmd->argv)
+		return (0);
+	cmd->argv[wc - 1] = NULL;
+	return (1);
+}

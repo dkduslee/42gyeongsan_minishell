@@ -6,21 +6,21 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 12:53:41 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:16:23 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:37:44 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void init_data(t_data *data, char **envp)
+void	init_data(t_data *data, char **envp)
 {
 	data->env = parse_env(envp);
 	data->exit_status = 0;
 }
 
-int count_cmd(t_cmd *cmd)
+int	count_cmd(t_cmd *cmd)
 {
-	int count;
+	int	count;
 
 	count = 0;
 	while (cmd)
@@ -31,9 +31,9 @@ int count_cmd(t_cmd *cmd)
 	return (count);
 }
 
-void close_all_pipes(int **pipes, int count)
+void	close_all_pipes(int **pipes, int count)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (i < count)
@@ -44,7 +44,7 @@ void close_all_pipes(int **pipes, int count)
 	}
 }
 
-void free_pid(t_pipes *pipeline)
+void	free_pid(t_pipes *pipeline)
 {
 	if (pipeline->pipes)
 		free(pipeline->pipes);
@@ -54,9 +54,9 @@ void free_pid(t_pipes *pipeline)
 	pipeline->pids = NULL;
 }
 
-void init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
+void	init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
 {
-	int i;
+	int	i;
 
 	pipeline->count = count_cmd(cmd);
 	pipeline->pids = malloc(sizeof(pid_t) * pipeline->count);
@@ -65,7 +65,7 @@ void init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
 	{
 		print_error(data, "malloc", errno, 1);
 		free_pid(pipeline);
-		return;
+		return ;
 	}
 	i = 0;
 	while (i < pipeline->count - 1)
@@ -76,7 +76,7 @@ void init_pipes(t_data *data, t_cmd *cmd, t_pipes *pipeline)
 			print_error(data, "pipe", errno, 1);
 			close_all_pipes(pipeline->pipes, i);
 			free_pid(pipeline);
-			return;
+			return ;
 		}
 		i++;
 	}

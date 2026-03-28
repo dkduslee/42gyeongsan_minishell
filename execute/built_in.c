@@ -6,11 +6,24 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:49 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 19:03:13 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:07:59 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+static int	is_n_flag(char *arg)
+{
+	int	i;
+
+	if (!arg || arg[0] != '-' || !arg[1])
+		return (0);
+	i = 1;
+	while (arg[i])
+		if (arg[i++] != 'n')
+			return (0);
+	return (1);
+}
 
 int	builtin_echo(t_data *data, char **args)
 {
@@ -20,7 +33,7 @@ int	builtin_echo(t_data *data, char **args)
 	(void)data;
 	newline = 1;
 	i = 0;
-	if (args && ft_strncmp(args[0], "-n", 3) == 0)
+	while (args && args[i] && is_n_flag(args[i]))
 	{
 		newline = 0;
 		i++;
@@ -94,8 +107,13 @@ int	builtin_unset(t_data *data, char **args)
 	return (0);
 }
 
-int	builtin_env(t_data *data)
+int	builtin_env(t_data *data, char **args)
 {
+	if (args && args[0] != NULL)
+	{
+		print_error_msg(data, "env", "too many arguments", 1);
+		return (1);
+	}
 	print_env_list(data->env);
 	return (0);
 }

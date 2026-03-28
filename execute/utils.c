@@ -6,14 +6,16 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/12 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/02 18:57:53 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/26 19:38:14 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void clean_up(t_data *data)
+void	clean_up(t_data *data, t_cmd *cmd)
 {
+	if (cmd)
+		free_cmd_list(cmd);
 	if (data)
 	{
 		if (data->env)
@@ -21,12 +23,12 @@ void clean_up(t_data *data)
 	}
 }
 
-void free_split(char **split)
+void	free_split(char **split)
 {
-	int i;
+	int	i;
 
 	if (!split)
-		return;
+		return ;
 	i = 0;
 	while (split[i])
 	{
@@ -36,11 +38,11 @@ void free_split(char **split)
 	free(split);
 }
 
-void merge_key_value(t_env *env, char **arr)
+void	merge_key_value(t_env *env, char **arr)
 {
-	t_env *cur;
-	int i;
-	char *tmp;
+	t_env	*cur;
+	int		i;
+	char	*tmp;
 
 	cur = env;
 	i = 0;
@@ -60,11 +62,11 @@ void merge_key_value(t_env *env, char **arr)
 	arr[i] = NULL;
 }
 
-char **env_to_array(t_env *env)
+char	**env_to_array(t_env *env)
 {
-	t_env *cur;
-	char **arr;
-	int count;
+	t_env	*cur;
+	char	**arr;
+	int		count;
 
 	count = 0;
 	cur = env;
