@@ -89,6 +89,7 @@ int	main(int argc, char **argv, char **envp)
 	shell_init();
 	signal_interactive();
 	run_shell(&data);
+	rl_clear_history();
 	clean_up(&data, NULL);
 	return (data.exit_status);
 }
