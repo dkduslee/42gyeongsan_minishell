@@ -34,13 +34,10 @@ typedef struct s_env
 	struct s_env *next;
 } t_env;
 
-struct s_cmd;
-
 typedef struct s_data
 {
 	t_env *env;
 	int exit_status;
-	struct s_cmd *cmd;
 } t_data;
 
 typedef enum e_redir_type
@@ -92,14 +89,14 @@ int builtin_cd(t_data *data, char **args);
 int builtin_pwd(t_data *data);
 int builtin_export(t_data *data, char **args);
 int builtin_unset(t_data *data, char **args);
-int builtin_exit(t_data *data, char **args);
+int builtin_exit(t_data *data, t_cmd *cmd, char **args);
 int builtin_env(t_data *data, char **args);
 int execute_builtin(t_data *data, t_cmd *cmd);
 int set_env_var(t_data *data, const char *key, const char *value);
 void make_env_new(t_data *data, char **args, char *equal_sign, int i);
 
 // utils.c
-void clean_up(t_data *data);
+void clean_up(t_data *data, t_cmd *cmd);
 void free_split(char **split);
 char **env_to_array(t_env *env);
 

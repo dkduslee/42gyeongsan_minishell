@@ -74,7 +74,7 @@ long long	str_to_ll(char *str)
 	return (result * sign);
 }
 
-int	builtin_exit(t_data *data, char **args)
+int	builtin_exit(t_data *data, t_cmd *cmd, char **args)
 {
 	int	status;
 
@@ -82,13 +82,15 @@ int	builtin_exit(t_data *data, char **args)
 	if (!args || !args[0])
 	{
 		status = data->exit_status;
-		clean_up(data);
+		free_cmd_list(cmd);
+		clean_up(data, NULL);
 		exit(status);
 	}
 	if (!is_valid_num(args[0]) || !long_range_check(args[0]))
 	{
 		print_error_msg(data, "exit", "numeric argument required", 2);
-		clean_up(data);
+		free_cmd_list(cmd);
+		clean_up(data, NULL);
 		exit(2);
 	}
 	if (args[1])
@@ -97,6 +99,7 @@ int	builtin_exit(t_data *data, char **args)
 		return (1);
 	}
 	status = str_to_ll(args[0]);
-	clean_up(data);
+	free_cmd_list(cmd);
+	clean_up(data, NULL);
 	exit((int)(status % 256));
 }
