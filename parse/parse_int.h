@@ -52,6 +52,6 @@ int		alloc_argv(t_cmd *cmd, t_token *tok);
 
 /* parse_utils.c */
 void	redir_append(t_cmd *cmd, t_redir_type type, char *file, int quoted);
-void	add_redir(t_cmd *cmd, t_token *tok);
+void	redir_from_token(t_cmd *cmd, t_token *tok);
 
 #endif

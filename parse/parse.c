@@ -56,7 +56,7 @@ static t_token	*fill_segment(t_cmd *cur, t_token *tok)
 		}
 		else
 		{
-			add_redir(cur, tok);
+			redir_from_token(cur, tok);
 			tok = tok->next;
 		}
 		tok = tok->next;

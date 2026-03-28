@@ -85,7 +85,7 @@ void	redir_append(t_cmd *cmd, t_redir_type type, char *file, int quoted)
 	cur->next = node;
 }
 
-void	add_redir(t_cmd *cmd, t_token *tok)
+void	redir_from_token(t_cmd *cmd, t_token *tok)
 {
 	t_redir_type	type;
 	t_token			*file;
