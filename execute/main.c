@@ -33,19 +33,18 @@ int	is_builtin(char *cmd)
 
 static void	process_input(t_data *data, char *input)
 {
-	t_cmd	*cmd;
-
 	if (!input || !*input)
 		return ;
-	cmd = parse_pipeline(input, data);
-	if (!cmd)
+	data->cmd = parse_pipeline(input, data);
+	if (!data->cmd)
 		return ;
 	g_signal = 0;
-	execute_pipeline(data, cmd);
+	execute_pipeline(data, data->cmd);
 	if (g_signal == SIGINT)
 		data->exit_status = 130;
 	g_signal = 0;
-	free_cmd_list(cmd);
+	free_cmd_list(data->cmd);
+	data->cmd = NULL;
 }
 
 static void	run_shell(t_data *data)

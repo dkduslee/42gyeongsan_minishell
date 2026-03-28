@@ -16,6 +16,11 @@ void	clean_up(t_data *data)
 {
 	if (data)
 	{
+		if (data->cmd)
+		{
+			free_cmd_list(data->cmd);
+			data->cmd = NULL;
+		}
 		if (data->env)
 			free_env_list(data->env);
 	}

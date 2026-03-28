@@ -34,10 +34,13 @@ typedef struct s_env
 	struct s_env *next;
 } t_env;
 
+struct s_cmd;
+
 typedef struct s_data
 {
 	t_env *env;
 	int exit_status;
+	struct s_cmd *cmd;
 } t_data;
 
 typedef enum e_redir_type
