@@ -54,10 +54,14 @@ static void	run_shell(t_data *data)
 
 	while (1)
 	{
-		line = readline("minishell$ ");
+		if (isatty(STDIN_FILENO))
+			line = readline("minishell$ ");
+		else
+			line = readline("");
 		if (!line)
 		{
-			ft_putendl_fd("exit", 1);
+			if (isatty(STDIN_FILENO))
+				ft_putendl_fd("exit", 1);
 			break ;
 		}
 		if (*line)
@@ -86,7 +90,8 @@ int	main(int argc, char **argv, char **envp)
 		ft_putendl_fd("minishell: failed to initialize", 2);
 		return (1);
 	}
-	shell_init();
+	if (isatty(STDIN_FILENO))
+		shell_init();
 	signal_interactive();
 	run_shell(&data);
 	rl_clear_history();
