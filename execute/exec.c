@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/21 00:00:00 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/26 19:25:42 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 17:12:08 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,11 +67,14 @@ int	prepare_child(t_data *data, t_cmd *cmd, t_pipes *pipeline, int i)
 	return (0);
 }
 
-static void	exit_child(t_data *data, t_cmd *head, t_pipes *pipeline, int status)
+void	exit_child(t_data *data, t_cmd *head, t_pipes *pipeline, int status)
 {
-	free_cmd_list(head);
-	free_pipeline(pipeline);
-	free_env_list(data->env);
+	if (head)
+		free_cmd_list(head);
+	if (pipeline)
+		free_pipeline(pipeline);
+	if (data)
+		free_env_list(data->env);
 	exit(status);
 }
 

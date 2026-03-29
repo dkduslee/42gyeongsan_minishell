@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 15:40:32 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/23 13:49:09 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 17:12:20 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,8 @@ void	free_pipeline(t_pipes *pipeline)
 {
 	int	i;
 
+	if (!pipeline)
+		return ;
 	if (pipeline->pipes)
 	{
 		i = 0;

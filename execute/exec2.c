@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/23 18:50:42 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/29 15:37:16 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 17:16:05 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void	signal_in_message(int line_count, char *delim)
 	ft_putstr_fd("')\n", STDOUT_FILENO);
 }
 
-int	collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
+int	collect_heredoc_fork(t_redir *redir, t_data *data, t_cmd *head)
 {
 	pid_t	pid;
 	int		status;
@@ -55,7 +55,7 @@ int	collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 	else if (pid == 0)
 	{
 		close(fd[0]);
-		heredoc_child(fd[1], delim, data, !redir->quoted);
+		heredoc_child(fd[1], data, redir, head);
 	}
 	close(fd[1]);
 	signal(SIGINT, SIG_IGN);
@@ -68,6 +68,7 @@ int	collect_heredoc_fork(t_redir *redir, char *delim, t_data *data)
 
 int	prepare_heredoc(t_data *data, t_cmd *cmd)
 {
+	t_cmd	*head;
 	t_cmd	*cur;
 
 	if (count_heredocs(cmd) > 16)
@@ -77,10 +78,11 @@ int	prepare_heredoc(t_data *data, t_cmd *cmd)
 		free_cmd_list(cmd);
 		return (-1);
 	}
+	head = cmd;
 	cur = cmd;
 	while (cur)
 	{
-		if (collect_heredoc(cur->redir, data) == -1)
+		if (collect_heredoc(cur->redir, data, head) == -1)
 			return (-1);
 		cur = cur->next;
 	}

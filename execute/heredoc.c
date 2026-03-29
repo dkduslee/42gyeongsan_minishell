@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/02 19:17:25 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/26 19:29:11 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 19:00:00 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ void	write_line(int fd, char *line, t_data *data, int expand)
 		out = expand_line(line, data);
 	else
 		out = ft_strdup(line);
+	free(line);
 	if (!out)
 		return ;
 	write(fd, out, ft_strlen(out));
@@ -47,7 +48,7 @@ void	write_line(int fd, char *line, t_data *data, int expand)
 	free(out);
 }
 
-void	heredoc_child(int write_fd, char *delim, t_data *data, int expand)
+void	heredoc_child(int write_fd, t_data *data, t_redir *redir, t_cmd *head)
 {
 	char	*line;
 	int		line_count;
@@ -59,29 +60,28 @@ void	heredoc_child(int write_fd, char *delim, t_data *data, int expand)
 		line = readline("> ");
 		if (!line)
 		{
-			signal_in_message(line_count, delim);
+			signal_in_message(line_count, redir->file);
 			break ;
 		}
-		if (ft_strncmp(line, delim, ft_strlen(delim) + 1) == 0)
+		if (ft_strncmp(line, redir->file, ft_strlen(redir->file) + 1) == 0)
 		{
 			free(line);
 			break ;
 		}
-		write_line(write_fd, line, data, expand);
-		free(line);
+		write_line(write_fd, line, data, !redir->quoted);
 		line_count++;
 	}
 	close(write_fd);
-	exit(0);
+	exit_child(data, head, NULL, 0);
 }
 
-int	collect_heredoc(t_redir *redir, t_data *data)
+int	collect_heredoc(t_redir *redir, t_data *data, t_cmd *head)
 {
 	while (redir)
 	{
 		if (redir->type == REDIR_HEREDOC)
 		{
-			if (collect_heredoc_fork(redir, redir->file, data) == -1)
+			if (collect_heredoc_fork(redir, data, head) == -1)
 				return (-1);
 		}
 		redir = redir->next;
