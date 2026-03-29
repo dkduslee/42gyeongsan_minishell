@@ -99,12 +99,19 @@ void	exec_child(t_data *data, t_cmd *head, t_pipes *pipeline, int i)
 			exit_child(data, head, pipeline, 127));
 	envp = env_to_array(data->env);
 	args = get_execve_args(cmd);
+	rl_clear_history();
+	free_cmd_list(head);
+	free_pipeline(pipeline);
+	free_env_list(data->env);
 	execve(path, args, envp);
-	print_error(data, cmd->cmd, errno, 126);
+	if (args)
+		print_error(data, args[0], errno, 126);
+	else
+		print_error(data, "execve", errno, 126);
 	free(path);
 	free_split(args);
 	free_split(envp);
-	exit_child(data, head, pipeline, 126);
+	exit(126);
 }
 
 int	execute_pipeline(t_data *data, t_cmd *cmd)
