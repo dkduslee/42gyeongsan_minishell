@@ -40,7 +40,6 @@ void	write_line(int fd, char *line, t_data *data, int expand)
 		out = expand_line(line, data);
 	else
 		out = ft_strdup(line);
-	free(line);
 	if (!out)
 		return ;
 	write(fd, out, ft_strlen(out));
@@ -69,6 +68,7 @@ void	heredoc_child(int write_fd, char *delim, t_data *data, int expand)
 			break ;
 		}
 		write_line(write_fd, line, data, expand);
+		free(line);
 		line_count++;
 	}
 	close(write_fd);
