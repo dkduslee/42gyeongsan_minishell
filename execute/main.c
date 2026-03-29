@@ -54,7 +54,10 @@ static void	run_shell(t_data *data)
 
 	while (1)
 	{
-		line = readline("minishell$ ");
+		if (isatty(STDIN_FILENO))
+			line = readline("minishell$ ");
+		else
+			line = readline(NULL);
 		if (!line)
 		{
 			if (isatty(STDIN_FILENO))
