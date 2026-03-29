@@ -6,39 +6,11 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:46:49 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/29 17:37:39 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 18:09:10 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-int	builtin_echo(t_data *data, char **args)
-{
-	int	i;
-	int	newline;
-
-	(void)data;
-	newline = 1;
-	i = 0;
-	while (args && args[i] && is_n_flag(args[i]))
-	{
-		newline = 0;
-		i++;
-	}
-	while (args && args[i])
-	{
-		if (ft_strncmp(args[i], "$?", 3) == 0)
-			printf("%d", data->exit_status);
-		else
-			printf("%s", args[i]);
-		if (args[i + 1])
-			printf(" ");
-		i++;
-	}
-	if (newline)
-		printf("\n");
-	return (0);
-}
 
 int	builtin_pwd(t_data *data)
 {

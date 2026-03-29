@@ -6,7 +6,7 @@
 /*   By: aylee <aylee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 17:36:58 by aylee             #+#    #+#             */
-/*   Updated: 2026/03/29 17:41:12 by aylee            ###   ########.fr       */
+/*   Updated: 2026/03/29 18:11:34 by aylee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,34 @@ static int	is_n_flag(char *arg)
 		if (arg[i++] != 'n')
 			return (0);
 	return (1);
+}
+
+int	builtin_echo(t_data *data, char **args)
+{
+	int	i;
+	int	newline;
+
+	(void)data;
+	newline = 1;
+	i = 0;
+	while (args && args[i] && is_n_flag(args[i]))
+	{
+		newline = 0;
+		i++;
+	}
+	while (args && args[i])
+	{
+		if (ft_strncmp(args[i], "$?", 3) == 0)
+			printf("%d", data->exit_status);
+		else
+			printf("%s", args[i]);
+		if (args[i + 1])
+			printf(" ");
+		i++;
+	}
+	if (newline)
+		printf("\n");
+	return (0);
 }
 
 int	builtin_cd(t_data *data, char **args)

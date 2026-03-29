@@ -6,7 +6,7 @@
 #    By: aylee <aylee@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/12 00:00:00 by aylee             #+#    #+#              #
-#    Updated: 2026/03/02 19:52:53 by aylee            ###   ########.fr        #
+#    Updated: 2026/03/29 18:05:53 by aylee            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,8 @@ CFLAGS	= -Wall -Wextra -Werror -I.. -I/opt/homebrew/opt/readline/include
 AR		= ar rcs
 
 SRCS	= built_in.c cmd_path.c command.c env.c exec.c exec2.c exit.c export.c \
-		heredoc.c image.c main_init.c main.c make_node.c pipe.c stderr.c utils.c
+		heredoc.c image.c main_init.c main.c make_node.c pipe.c stderr.c utils.c \
+		no_pipe.c sub_built.c
 OBJS	= $(SRCS:.c=.o)
 LIB		= libexec.a
 
