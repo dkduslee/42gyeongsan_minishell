@@ -58,8 +58,7 @@ int	no_pipe(t_data *data, t_cmd *cmd)
 	if (pid == 0)
 		no_pipe_child(data, cmd);
 	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		data->exit_status = WEXITSTATUS(status);
+	update_exit_status(data, status);
 	return (data->exit_status);
 }
 
@@ -98,12 +97,7 @@ int	wait_pids(t_data *data, t_pipes *pipeline)
 	{
 		waitpid(pipeline->pids[i], &status, 0);
 		if (i == pipeline->count - 1)
-		{
-			if (WIFEXITED(status))
-				data->exit_status = WEXITSTATUS(status);
-			else if (WIFSIGNALED(status))
-				data->exit_status = 128 + WTERMSIG(status);
-		}
+			update_exit_status(data, status);
 		i++;
 	}
 	return (data->exit_status);
