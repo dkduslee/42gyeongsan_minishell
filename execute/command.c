@@ -12,15 +12,24 @@
 
 #include "minishell.h"
 
+void	update_exit_status(t_data *data, int status)
+{
+	if (WIFEXITED(status))
+		data->exit_status = WEXITSTATUS(status);
+	else if (WIFSIGNALED(status))
+	{
+		data->exit_status = 128 + WTERMSIG(status);
+		if (WTERMSIG(status) == SIGQUIT)
+			ft_putendl_fd("Quit (core dumped)", 2);
+	}
+}
+
 int	wait_child(t_data *data, pid_t pid)
 {
 	int	status;
 
 	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		data->exit_status = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		data->exit_status = 128 + WTERMSIG(status);
+	update_exit_status(data, status);
 	return (data->exit_status);
 }
 

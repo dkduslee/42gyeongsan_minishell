@@ -108,6 +108,11 @@ int is_builtin(char *cmd);
 // main_init.c
 void init_data(t_data *data, char **envp);
 
+// command.c
+void update_exit_status(t_data *data, int status);
+int wait_child(t_data *data, pid_t pid);
+int fork_and_exec(t_data *data, t_cmd *cmd, char *cmd_path);
+
 // exec.c
 char *find_command_path(char *cmd, t_env *env);
 int execute_command(t_data *data, t_cmd *cmd);
